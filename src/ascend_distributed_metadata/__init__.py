@@ -1,0 +1,1 @@
+"""Ascend distributed metadata MOD."""
