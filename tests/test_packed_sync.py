@@ -41,6 +41,12 @@ class FakeDist:
         self.calls.append((local.clone(), output.numel(), group))
         output.copy_(torch.tensor(self.values, dtype=torch.int32))
 
+    def all_reduce(self, tensor, *, group):
+        self.calls.append((tensor.clone(), tensor.numel(), group))
+        word = sum(value << (packed_sync.DP2_SLOT_BITS * rank)
+                   for rank, value in enumerate(self.values))
+        tensor.fill_(word)
+
 
 def module_for(values, *, skip=False):
     dist = FakeDist(values)
@@ -74,6 +80,48 @@ def test_packed_collective_reconstructs_sparse_vector_and_minimum_mode():
     assert local.tolist() == [values[1]]
     assert output_length == 4
     assert group == "reviewed-cpu-group"
+
+
+def test_dp2_scalar_collective_preserves_sparse_and_padded_results():
+    counts = [17, 8191]
+    modes = [Mode.FULL, Mode.NONE]
+    values = [packed_sync._encode(n, m) for n, m in zip(counts, modes)]
+    module, dist = module_for(values)
+    wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+    runners = [Runner(rank=0), Runner(rank=1)]
+    for runner in runners:
+        runner.dp_size = 2
+
+    sparse = wrapped(runners[0], counts[0], cudagraph_mode=modes[0])
+    padded = wrapped(runners[1], counts[1], cudagraph_mode=modes[1],
+                     allow_dp_padding=True)
+
+    assert (sparse[0], sparse[1].tolist(), sparse[2]) == (8191, counts, Mode.NONE)
+    assert (padded[0], padded[1].tolist(), padded[2]) == (8191, [8191] * 2, Mode.NONE)
+    assert [call[1] for call in dist.calls] == [1, 1]
+    assert [call[0].tolist() for call in dist.calls] == [[values[0]],
+                                                         [values[1] << 15]]
+    assert [runner.native_calls for runner in runners] == [0, 0]
+
+
+@pytest.mark.parametrize("bad_rank", [0, 1])
+def test_dp2_out_of_range_rank_falls_back_on_both_ranks(bad_rank):
+    counts = [7, 8]
+    counts[bad_rank] = packed_sync.DP2_MAX_TOKENS + 1
+    values = [packed_sync._encode(n, Mode.FULL) for n in counts]
+    values[bad_rank] = packed_sync.DP2_SENTINEL
+    module, dist = module_for(values)
+    wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+    runners = [Runner(rank=0), Runner(rank=1)]
+    for runner in runners:
+        runner.dp_size = 2
+
+    for rank, runner in enumerate(runners):
+        wrapped(runner, counts[rank], cudagraph_mode=Mode.FULL)
+
+    assert len(dist.calls) == 2
+    assert [call[1] for call in dist.calls] == [1, 1]
+    assert [runner.native_calls for runner in runners] == [1, 1]
 
 
 @pytest.mark.parametrize("draft,padding", [(False, True), (True, False)])
