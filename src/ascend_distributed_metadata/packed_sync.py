@@ -1,9 +1,10 @@
 """Opt-in, version-pinned replacement for Ascend's DP metadata collective.
 
-The native path all-reduces a 2 x DP int32 tensor. This path all-gathers one
-packed int32 value per rank and reconstructs the same token vector and minimum
-runtime graph mode. Every participating rank uses the same collective shape,
-even when local padding decisions differ.
+The native path all-reduces a 2 x DP int32 tensor. DP2 uses one int32
+all-reduce with disjoint rank slots; larger groups all-gather one int32 per
+rank. Both reconstruct the same token vector and minimum runtime graph mode.
+Every participating rank uses the same collective shape, even when local
+padding decisions differ.
 """
 
 import ast
@@ -22,6 +23,12 @@ ORIGINAL_ATTR = "_adm_packed_sync_original"
 # The remaining signed int32 bits hold a nonnegative token count.
 MAX_PACKED_TOKENS = (2**31 - 1) >> 2
 FALLBACK_SENTINEL = -1
+# DP2 packs both rank slots into a positive int32. Mode 3 is a sentinel.
+DP2_SLOT_BITS = 15
+DP2_SLOT_MASK = (1 << DP2_SLOT_BITS) - 1
+DP2_MAX_TOKENS = (DP2_SLOT_MASK >> 2)
+DP2_MAX_VALUE = (DP2_MAX_TOKENS << 2) | 2
+DP2_SENTINEL = 3
 
 
 class PackedSyncViolation(RuntimeError):
@@ -73,15 +80,27 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
                 self, num_tokens, is_draft_model, cudagraph_mode, allow_dp_padding
             )
 
-        local = torch.tensor(
-            [_encode(num_tokens, cudagraph_mode)], device="cpu", dtype=torch.int32
-        )
-        gathered = torch.empty(self.dp_size, device="cpu", dtype=torch.int32)
-        dist.all_gather_into_tensor(
-            gathered, local, group=get_dp_group().cpu_group
-        )
-        values = gathered.tolist()
-        if any(value < 0 for value in values):
+        encoded = _encode(num_tokens, cudagraph_mode)
+        if self.dp_size == 2:
+            slot = encoded if 0 <= encoded <= DP2_MAX_VALUE else DP2_SENTINEL
+            packed = torch.tensor(
+                [slot << (DP2_SLOT_BITS * self.dp_rank)],
+                device="cpu", dtype=torch.int32,
+            )
+            dist.all_reduce(packed, group=get_dp_group().cpu_group)
+            word = int(packed.item())
+            values = [
+                (word >> (DP2_SLOT_BITS * rank)) & DP2_SLOT_MASK
+                for rank in range(2)
+            ]
+        else:
+            local = torch.tensor([encoded], device="cpu", dtype=torch.int32)
+            gathered = torch.empty(self.dp_size, device="cpu", dtype=torch.int32)
+            dist.all_gather_into_tensor(
+                gathered, local, group=get_dp_group().cpu_group
+            )
+            values = gathered.tolist()
+        if any(value < 0 or (value & 3) == DP2_SENTINEL for value in values):
             # All ranks see the sentinel and enter the same native collective.
             return original(
                 self, num_tokens, is_draft_model, cudagraph_mode, allow_dp_padding

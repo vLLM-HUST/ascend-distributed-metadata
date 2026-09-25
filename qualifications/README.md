@@ -47,3 +47,18 @@ alternating timing blocks per run and SHA256 hashes of the original results.
 The exact [microbenchmark script](benchmark_dp_sync.py) is included here;
 its SHA256 matches the hashes recorded for both runs.
 This CPU/Gloo measurement does not measure NPU communication or Qwen serving.
+
+## DP2 scalar-sync candidate — 2026-09-25
+
+The [candidate record](qwen35-dp2-scalar-candidate-20260925.json) covers an
+experimental DP2 one-`int32` all-reduce. Two independent local CPU/Gloo
+comparisons against the published MOD passed correctness and measured median
+per-call times of 0.253 vs 0.185 ms and 0.310 vs 0.210 ms (published vs
+candidate). The candidate was 26.8% and 32.4% faster in this sync-call scope.
+The exact [candidate microbenchmark script](benchmark_dp2_scalar_candidate.py)
+and original-result SHA256 hashes are included.
+
+One matched Qwen3.5 TP4/DP2 serving comparison completed 32/32 requests in
+both modes. Candidate output throughput was 26.979 tokens/s versus 26.906
+tokens/s for the published MOD. The 0.27% difference is too small to claim
+a service-level gain. Candidate serving recheck is pending.

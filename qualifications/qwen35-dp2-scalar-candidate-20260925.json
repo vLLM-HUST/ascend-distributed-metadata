@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "evidence_type": "Qwen3.5-35B-A3B DP2 scalar-sync candidate",
+  "status": "candidate branch; service speedup unconfirmed; candidate serving recheck pending",
+  "source": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "modelscope_revision": "712cf74392b05026a6db2bf213d343747d1f6d45",
+    "candidate_base_revision": "df151235cf540a88a4592c00287df7d66303eb99",
+    "candidate_source_sha256": "4bb42bbd2eaceb6dfab95f4d5a9bb9f4195e6d0bb3cac34cead2e06b430eddfd",
+    "published_mod_source_sha256": "01b19552600434cc5d7839657b961bc6c9378628b11e5e635d1fa1c22972ec98",
+    "vllm_hust_core_revision": "e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0",
+    "vllm_ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "ascend_target_fingerprint": "3e3cac40908b68c65c45c820efca81073c0a11bef5eab13b2f8cf9ce36e407f5",
+    "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5",
+    "benchmark_scenarios_sha256": "782177f7962e9ca855335d8a9269a325b3edb41b4682411cc7376a9f2027f91b"
+  },
+  "cpu_gloo_sync_microbenchmark": {
+    "scope": "two local CPU processes using Gloo; direct DP metadata call; no model or NPU execution",
+    "workload": "DP2 token counts [8, 12], CUDAGraphMode.NONE, no padding",
+    "warmup_calls_per_method": 30,
+    "iterations_per_block": 400,
+    "block_sequence": [
+      "published",
+      "candidate",
+      "candidate",
+      "published",
+      "published",
+      "candidate",
+      "candidate",
+      "published"
+    ],
+    "script_sha256": "e3a35d716c4c69d9650070332647331f283b7c13a0cb1954c596d726131ac97e",
+    "runs": [
+      {
+        "original_result_sha256": "7f3c230ca6addead6ffd20765e0d8e3836d35792e95b4eaa0d055bdafbe35623",
+        "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+        "published_ms_per_call": 0.252753512468189,
+        "candidate_ms_per_call": 0.1849135768134147,
+        "candidate_change_percent": -26.8403532723655,
+        "blocks": [
+          {
+            "method": "published",
+            "worst_rank_ms": 98.74124079942703
+          },
+          {
+            "method": "candidate",
+            "worst_rank_ms": 73.51122237741947
+          },
+          {
+            "method": "candidate",
+            "worst_rank_ms": 73.11395555734634
+          },
+          {
+            "method": "published",
+            "worst_rank_ms": 96.55802883207798
+          },
+          {
+            "method": "published",
+            "worst_rank_ms": 103.46156917512417
+          },
+          {
+            "method": "candidate",
+            "worst_rank_ms": 74.61373694241047
+          },
+          {
+            "method": "candidate",
+            "worst_rank_ms": 74.41963907331228
+          },
+          {
+            "method": "published",
+            "worst_rank_ms": 106.01011011749506
+          }
+        ]
+      },
+      {
+        "original_result_sha256": "fc9f4efa5b3d07018f3b21d35434ef539950b92a0368058f5d08531e3dd676ec",
+        "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+        "published_ms_per_call": 0.3103898244444281,
+        "candidate_ms_per_call": 0.20984541508369148,
+        "candidate_change_percent": -32.39294636694444,
+        "blocks": [
+          {
+            "method": "published",
+            "worst_rank_ms": 119.0311936661601
+          },
+          {
+            "method": "candidate",
+            "worst_rank_ms": 83.74147117137909
+          },
+          {
+            "method": "candidate",
+            "worst_rank_ms": 84.35799274593592
+          },
+          {
+            "method": "published",
+            "worst_rank_ms": 124.74453076720238
+          },
+          {
+            "method": "published",
+            "worst_rank_ms": 123.56732878834009
+          },
+          {
+            "method": "candidate",
+            "worst_rank_ms": 84.13486089557409
+          },
+          {
+            "method": "candidate",
+            "worst_rank_ms": 83.67472141981125
+          },
+          {
+            "method": "published",
+            "worst_rank_ms": 127.13838275521994
+          }
+        ]
+      }
+    ],
+    "interpretation": "Candidate was faster in both independent local sync-call measurements; no inference about NPU or full-model throughput."
+  },
+  "full_model_serving": {
+    "workload": {
+      "benchmark_scenario": "random-online-4chip",
+      "subset_requests": 32,
+      "dataset_name": "random",
+      "input_tokens_per_request": 1024,
+      "output_tokens_per_request": 256,
+      "seed": 0,
+      "request_rate": "inf",
+      "max_concurrency": 8,
+      "tensor_parallel_size": 4,
+      "data_parallel_size": 2,
+      "device_type": "Ascend 910B2",
+      "enforce_eager": true,
+      "max_model_len": 2048,
+      "mod_enable_env": "1 in both runs"
+    },
+    "runs": [
+      {
+        "mode": "candidate",
+        "original_detailed_result_sha256": "2c8422687a1f75e6dc01027fa18aada3bf5df54b29afa4ffb47c300b7ae03629",
+        "completed": 32,
+        "failed": 0,
+        "duration_s": 303.6400860417634,
+        "output_throughput_tokens_per_s": 26.97930996789815,
+        "mean_ttft_ms": 1326.8120028078556,
+        "mean_tpot_ms": 291.9573575908811
+      },
+      {
+        "mode": "published_mod",
+        "original_detailed_result_sha256": "73fc80788de3fe15a0e3284e48439ba84186984ba1128777a078e9552c323bfd",
+        "completed": 32,
+        "failed": 0,
+        "duration_s": 304.4723733635619,
+        "output_throughput_tokens_per_s": 26.905560952875557,
+        "mean_ttft_ms": 1361.1822075909004,
+        "mean_tpot_ms": 292.70035998939136
+      }
+    ],
+    "candidate_output_throughput_change_percent": 0.2741032426410328,
+    "interpretation": "Both runs completed 32/32. The 0.27% candidate throughput difference is too small to establish a service-level speedup. Candidate recheck pending."
+  }
+}
