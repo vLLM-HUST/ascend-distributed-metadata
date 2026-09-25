@@ -61,7 +61,7 @@ method. This is a narrower result than NPU communication or model throughput.
 
 The [scalar DP2 candidate](qualifications/qwen35-dp2-scalar-candidate-20260925.json)
 was 26.8% and 32.4% faster than the published MOD in two separate local
-CPU/Gloo sync-call measurements. A single matched Qwen3.5 TP4/DP2 serving
-comparison completed 32/32 requests in each mode: candidate 26.979 and
-published MOD 26.906 output tokens/s. That 0.27% difference does not establish
-a service-level speedup; a candidate serving recheck remains pending.
+CPU/Gloo sync-call measurements. A Qwen3.5 TP4/DP2 candidate-published-
+candidate serving sequence completed 32/32 requests in every run: candidate
+26.979 and 27.052 versus published MOD 26.906 output tokens/s. These 0.27%
+and 0.54% differences do not establish a service-level speedup.
