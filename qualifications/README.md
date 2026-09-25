@@ -17,3 +17,15 @@ Generated text, host paths, and raw server logs are not published.
 The plugin was enabled for this run, but DP1 takes the native metadata path.
 This result establishes model execution only. A MOD speedup requires a
 matched DP2 baseline, treatment, and recheck.
+
+## Qwen3.5-35B-A3B TP4/DP2 baseline — 2026-09-25
+
+The [baseline result](qwen35-35b-a3b-tp4-dp2-baseline-20260925.json) uses
+the same 32-request subset, model, seed, token lengths, and concurrency on
+eight Ascend 910B2 devices. The MOD was configured off. All 32 requests
+completed without errors. Duration was 301.59 s and output throughput was
+27.16 tokens/s. The original detailed result is retained locally and its
+SHA256 is recorded in the public JSON.
+
+This is the first DP2 baseline. A matched MOD run and independent recheck are
+still required before reporting a performance difference.

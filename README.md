@@ -50,8 +50,8 @@ group-visible sentinel; all ranks then run the original collective.
 
 ## Verification status
 
-The [Qwen3.5-35B-A3B TP4/DP1 smoke test](qualifications/README.md) completed 32/32
-requests on Ascend 910B2. DP1 uses the native metadata path, so this does not
-establish a MOD speedup. A positive performance claim requires a clean matched
-DP2 baseline, treatment, and independent recheck with completed requests and
-no rank errors.
+The [Qwen3.5-35B-A3B qualification results](qualifications/README.md) include
+a TP4/DP1 model smoke test and a TP4/DP2 baseline, each with 32/32 completed
+requests on Ascend 910B2. DP1 uses the native metadata path. A positive
+performance claim requires a matched MOD treatment and independent recheck
+with completed requests and no rank errors.

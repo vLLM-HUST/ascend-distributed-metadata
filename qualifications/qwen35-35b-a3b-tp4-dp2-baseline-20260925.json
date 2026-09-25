@@ -1,0 +1,255 @@
+{
+  "schema_version": 1,
+  "evidence_type": "Qwen3.5-35B-A3B TP4/DP2 baseline",
+  "qualification": "single MOD-off baseline; matched treatment and rechecks pending",
+  "source": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "modelscope_revision": "712cf74392b05026a6db2bf213d343747d1f6d45",
+    "matching_hugging_face_revision": "59d61f3ce65a6d9863b86d2e96597125219dc754",
+    "mod_implementation_revision": "6d7f0c6bab38c233e11c831a30ad353e37b33aaa",
+    "mod_delivery_revision": "a3d5ab92a5abf99be970cf61e9be9c314c7f25c9",
+    "vllm_hust_core_revision": "e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0",
+    "vllm_ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5",
+    "benchmark_scenarios_sha256": "782177f7962e9ca855335d8a9269a325b3edb41b4682411cc7376a9f2027f91b",
+    "original_detailed_result_sha256": "57867efcf62db6f655c489113e01211572167853e802507f608976fe0836491c"
+  },
+  "workload": {
+    "benchmark_scenario": "random-online-4chip",
+    "subset_requests": 32,
+    "dataset_name": "random",
+    "input_tokens_per_request": 1024,
+    "requested_output_tokens_per_request": 256,
+    "seed": 0,
+    "request_rate": "inf",
+    "max_concurrency": 8,
+    "tensor_parallel_size": 4,
+    "data_parallel_size": 2,
+    "device_type": "Ascend 910B2",
+    "plugin_selected": "adm_packed_sync",
+    "plugin_enable_env": "0",
+    "enforce_eager": true,
+    "max_model_len": 2048
+  },
+  "verification": {
+    "benchmark_exit": 0,
+    "summary_exit": 0,
+    "error_entries_nonempty": 0,
+    "all_requests_completed": true
+  },
+  "metrics": {
+    "duration": 301.59281085059047,
+    "completed": 32,
+    "failed": 0,
+    "total_input_tokens": 32768,
+    "total_output_tokens": 8192,
+    "request_throughput": 0.10610332490933562,
+    "output_throughput": 27.16245117678992,
+    "total_token_throughput": 135.81225588394958,
+    "max_output_tokens_per_s": 32.0,
+    "max_concurrent_requests": 14,
+    "mean_ttft_ms": 1218.3686706994195,
+    "median_ttft_ms": 1097.2620178945363,
+    "p99_ttft_ms": 1927.7159496210515,
+    "mean_tpot_ms": 290.3972134071713,
+    "median_tpot_ms": 290.3423354997501,
+    "p99_tpot_ms": 291.3898849046479,
+    "mean_itl_ms": 290.3972144121094,
+    "median_itl_ms": 288.96407317370176,
+    "p99_itl_ms": 309.68505495227873
+  },
+  "requests": [
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 800.879,
+      "mean_itl_ms": 290.428
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1517.462,
+      "mean_itl_ms": 289.937
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1514.96,
+      "mean_itl_ms": 289.934
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 801.265,
+      "mean_itl_ms": 290.428
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1927.951,
+      "mean_itl_ms": 289.888
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1923.782,
+      "mean_itl_ms": 289.892
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1927.192,
+      "mean_itl_ms": 289.888
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1922.29,
+      "mean_itl_ms": 289.896
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 989.586,
+      "mean_itl_ms": 291.06
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 990.388,
+      "mean_itl_ms": 291.056
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1092.354,
+      "mean_itl_ms": 290.606
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1088.733,
+      "mean_itl_ms": 290.615
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1087.445,
+      "mean_itl_ms": 290.598
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1088.803,
+      "mean_itl_ms": 290.598
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1477.083,
+      "mean_itl_ms": 290.251
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1473.451,
+      "mean_itl_ms": 290.256
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 970.622,
+      "mean_itl_ms": 290.635
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 970.05,
+      "mean_itl_ms": 290.622
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1102.17,
+      "mean_itl_ms": 290.121
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1103.879,
+      "mean_itl_ms": 290.106
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1117.902,
+      "mean_itl_ms": 290.046
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1114.429,
+      "mean_itl_ms": 290.048
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1222.124,
+      "mean_itl_ms": 289.581
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1218.124,
+      "mean_itl_ms": 289.593
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 967.961,
+      "mean_itl_ms": 291.389
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 967.812,
+      "mean_itl_ms": 291.39
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1065.924,
+      "mean_itl_ms": 291.024
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1065.739,
+      "mean_itl_ms": 291.012
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1070.036,
+      "mean_itl_ms": 290.65
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1066.909,
+      "mean_itl_ms": 290.66
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1171.778,
+      "mean_itl_ms": 290.244
+    },
+    {
+      "input_tokens": 1024,
+      "output_tokens": 256,
+      "ttft_ms": 1168.715,
+      "mean_itl_ms": 290.257
+    }
+  ]
+}
