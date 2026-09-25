@@ -1,0 +1,185 @@
+{
+  "schema_version": 1,
+  "evidence_type": "Qwen3.5-35B-A3B DP2 MOD comparison",
+  "conclusion": "Two local CPU/Gloo DP metadata call measurements favored MOD. Four full-model serving runs did not establish an end-to-end speedup.",
+  "source": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "modelscope_revision": "712cf74392b05026a6db2bf213d343747d1f6d45",
+    "mod_implementation_revision": "6d7f0c6bab38c233e11c831a30ad353e37b33aaa",
+    "mod_delivery_revision_at_run": "17e339d203b6e040489700d8bbeba19a18b5a837",
+    "vllm_hust_core_revision": "e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0",
+    "vllm_ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5",
+    "benchmark_scenarios_sha256": "782177f7962e9ca855335d8a9269a325b3edb41b4682411cc7376a9f2027f91b"
+  },
+  "full_model_serving": {
+    "workload": {
+      "benchmark_scenario": "random-online-4chip",
+      "subset_requests": 32,
+      "dataset_name": "random",
+      "input_tokens_per_request": 1024,
+      "output_tokens_per_request": 256,
+      "seed": 0,
+      "request_rate": "inf",
+      "max_concurrency": 8,
+      "tensor_parallel_size": 4,
+      "data_parallel_size": 2,
+      "device_type": "Ascend 910B2",
+      "enforce_eager": true,
+      "max_model_len": 2048,
+      "mod_enable_env": {
+        "baseline": "0",
+        "mod": "1"
+      }
+    },
+    "runs": [
+      {
+        "mode": "baseline",
+        "original_detailed_result_sha256": "57867efcf62db6f655c489113e01211572167853e802507f608976fe0836491c",
+        "duration_s": 301.59281085059047,
+        "completed": 32,
+        "failed": 0,
+        "output_throughput_tokens_per_s": 27.16245117678992,
+        "mean_ttft_ms": 1218.3686706994195,
+        "mean_tpot_ms": 290.3972134071713
+      },
+      {
+        "mode": "mod",
+        "original_detailed_result_sha256": "5cde70012bfbc680347bfce312856d421a84149834fbff074b94b67ef4d0c542",
+        "duration_s": 305.39601577445865,
+        "completed": 32,
+        "failed": 0,
+        "output_throughput_tokens_per_s": 26.8241875363887,
+        "mean_ttft_ms": 1348.2131540367845,
+        "mean_tpot_ms": 293.567935488867
+      },
+      {
+        "mode": "mod",
+        "original_detailed_result_sha256": "9e610d0495feff81dd59af2b76a5f26f28eb1ca0296efb4f82413246ffcc8b44",
+        "duration_s": 304.936813226901,
+        "completed": 32,
+        "failed": 0,
+        "output_throughput_tokens_per_s": 26.86458192210594,
+        "mean_ttft_ms": 1179.5121783507057,
+        "mean_tpot_ms": 293.86766512373777
+      },
+      {
+        "mode": "baseline",
+        "original_detailed_result_sha256": "3a7f173d197c0f4d1aa24442f789d169c292a9ed3b1d20066b6670a171873669",
+        "duration_s": 306.1386600974947,
+        "completed": 32,
+        "failed": 0,
+        "output_throughput_tokens_per_s": 26.759116269049873,
+        "mean_ttft_ms": 1344.7472916159313,
+        "mean_tpot_ms": 294.35893783001137
+      }
+    ],
+    "mean_baseline_output_throughput_tokens_per_s": 26.960783722919896,
+    "mean_mod_output_throughput_tokens_per_s": 26.84438472924732,
+    "mod_mean_change_percent": -0.4317344587191019,
+    "interpretation": "No repeatable end-to-end throughput gain; run-to-run baseline variation overlaps the MOD results."
+  },
+  "cpu_gloo_sync_microbench": {
+    "scope": "Two local CPU processes, Gloo backend, pinned Ascend method and MOD wrapper; no model or NPU execution",
+    "workload": "DP2, rank token counts [8,12], CUDAGraphMode.NONE, no padding",
+    "warmup_calls_per_method": 30,
+    "iterations_per_block": 400,
+    "block_sequence": [
+      "native",
+      "mod",
+      "mod",
+      "native",
+      "native",
+      "mod",
+      "mod",
+      "native"
+    ],
+    "runs": [
+      {
+        "original_result_sha256": "9c23cb00eb93c1732e225e8ad8a122c9bb0a34f5b3fc0d847efbc2c39782c7e4",
+        "script_sha256": "d92fa5dc2b0cdb87b1dc5fdbe2e631cde74059606ad3f9bf135fe0690914b725",
+        "correctness": "both methods returned (12, [8, 12], CUDAGraphMode.NONE)",
+        "median_native_ms_per_call": 0.4152797453571111,
+        "median_mod_ms_per_call": 0.30968675040639937,
+        "mod_change_percent": -25.426955234695892,
+        "blocks": [
+          {
+            "method": "native",
+            "worst_rank_ms": 164.09762669354677
+          },
+          {
+            "method": "mod",
+            "worst_rank_ms": 123.62525518983603
+          },
+          {
+            "method": "mod",
+            "worst_rank_ms": 123.2962692156434
+          },
+          {
+            "method": "native",
+            "worst_rank_ms": 166.09569266438484
+          },
+          {
+            "method": "native",
+            "worst_rank_ms": 166.4851801469922
+          },
+          {
+            "method": "mod",
+            "worst_rank_ms": 124.12414513528347
+          },
+          {
+            "method": "mod",
+            "worst_rank_ms": 124.32368844747543
+          },
+          {
+            "method": "native",
+            "worst_rank_ms": 166.12810362130404
+          }
+        ]
+      },
+      {
+        "original_result_sha256": "128254e563ae3d6d868d8cd5454cfd4aadabf2c89c57b311e13fa55b9406ebc7",
+        "script_sha256": "d92fa5dc2b0cdb87b1dc5fdbe2e631cde74059606ad3f9bf135fe0690914b725",
+        "correctness": "both methods returned (12, [8, 12], CUDAGraphMode.NONE)",
+        "median_native_ms_per_call": 0.42352233547717333,
+        "median_mod_ms_per_call": 0.2985722559969872,
+        "mod_change_percent": -29.502595025928823,
+        "blocks": [
+          {
+            "method": "native",
+            "worst_rank_ms": 169.60780508816242
+          },
+          {
+            "method": "mod",
+            "worst_rank_ms": 121.19630165398121
+          },
+          {
+            "method": "mod",
+            "worst_rank_ms": 119.43826358765364
+          },
+          {
+            "method": "native",
+            "worst_rank_ms": 169.21006329357624
+          },
+          {
+            "method": "native",
+            "worst_rank_ms": 173.8731972873211
+          },
+          {
+            "method": "mod",
+            "worst_rank_ms": 119.41954120993614
+          },
+          {
+            "method": "mod",
+            "worst_rank_ms": 119.15094591677189
+          },
+          {
+            "method": "native",
+            "worst_rank_ms": 168.44423860311508
+          }
+        ]
+      }
+    ],
+    "interpretation": "MOD was faster in both independent local sync-call measurements; this result does not imply faster Qwen serving or NPU communication."
+  }
+}

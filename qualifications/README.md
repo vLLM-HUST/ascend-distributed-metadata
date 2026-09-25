@@ -29,3 +29,21 @@ SHA256 is recorded in the public JSON.
 
 This is the first DP2 baseline. A matched MOD run and independent recheck are
 still required before reporting a performance difference.
+
+## DP2 MOD comparison and sync-call microbenchmark — 2026-09-25
+
+The [comparison result](qwen35-35b-a3b-dp2-mod-comparison-20260925.json)
+records two baseline and two MOD full-model runs under the same 32-request
+TP4/DP2 workload. Each completed 32/32 requests without errors. Baseline
+output throughput was 27.16 and 26.76 tokens/s; MOD throughput was 26.82 and
+26.86 tokens/s. These runs do not establish an end-to-end speedup.
+
+Two independent local two-process CPU/Gloo measurements directly called the
+pinned Ascend sync method and the MOD wrapper. Median per-call times were
+0.415 vs 0.310 ms and 0.424 vs 0.299 ms, respectively (native vs MOD).
+The MOD was 25.4% and 29.5% faster in this limited sync-call measurement.
+Correctness was checked before timing. The result file includes all eight
+alternating timing blocks per run and SHA256 hashes of the original results.
+The exact [microbenchmark script](benchmark_dp_sync.py) is included here;
+its SHA256 matches the hashes recorded for both runs.
+This CPU/Gloo measurement does not measure NPU communication or Qwen serving.

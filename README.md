@@ -51,7 +51,8 @@ group-visible sentinel; all ranks then run the original collective.
 ## Verification status
 
 The [Qwen3.5-35B-A3B qualification results](qualifications/README.md) include
-a TP4/DP1 model smoke test and a TP4/DP2 baseline, each with 32/32 completed
-requests on Ascend 910B2. DP1 uses the native metadata path. A positive
-performance claim requires a matched MOD treatment and independent recheck
-with completed requests and no rank errors.
+a TP4/DP1 model smoke test and four TP4/DP2 baseline/MOD serving runs, all
+with 32/32 completed requests on Ascend 910B2. The matched serving runs did
+not establish an end-to-end speedup. Two independent local CPU/Gloo DP2
+sync-call measurements found the MOD 25.4% and 29.5% faster than the native
+method. This is a narrower result than NPU communication or model throughput.
