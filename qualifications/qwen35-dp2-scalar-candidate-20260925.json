@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "evidence_type": "Qwen3.5-35B-A3B DP2 scalar-sync candidate",
-  "status": "candidate branch; service speedup unconfirmed; candidate serving recheck pending",
+  "status": "candidate branch; service speedup unconfirmed after candidate-published-candidate sequence",
   "source": {
     "model": "Qwen/Qwen3.5-35B-A3B",
     "modelscope_revision": "712cf74392b05026a6db2bf213d343747d1f6d45",
@@ -12,7 +12,8 @@
     "vllm_ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
     "ascend_target_fingerprint": "3e3cac40908b68c65c45c820efca81073c0a11bef5eab13b2f8cf9ce36e407f5",
     "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5",
-    "benchmark_scenarios_sha256": "782177f7962e9ca855335d8a9269a325b3edb41b4682411cc7376a9f2027f91b"
+    "benchmark_scenarios_sha256": "782177f7962e9ca855335d8a9269a325b3edb41b4682411cc7376a9f2027f91b",
+    "candidate_implementation_revision": "26b8ac3d1878ad5ec93824e320a10ad7a65916fd"
   },
   "cpu_gloo_sync_microbenchmark": {
     "scope": "two local CPU processes using Gloo; direct DP metadata call; no model or NPU execution",
@@ -153,9 +154,24 @@
         "output_throughput_tokens_per_s": 26.905560952875557,
         "mean_ttft_ms": 1361.1822075909004,
         "mean_tpot_ms": 292.70035998939136
+      },
+      {
+        "mode": "candidate",
+        "original_detailed_result_sha256": "4e9039eeeb865b9ca9870e795b6f6cef1ec8b7bcd2d54e9d3b090b253cc43b3a",
+        "completed": 32,
+        "failed": 0,
+        "duration_s": 302.82808265276253,
+        "output_throughput_tokens_per_s": 27.05165230462905,
+        "mean_ttft_ms": 1337.0867953053676,
+        "mean_tpot_ms": 291.1516191984536
       }
     ],
-    "candidate_output_throughput_change_percent": 0.2741032426410328,
-    "interpretation": "Both runs completed 32/32. The 0.27% candidate throughput difference is too small to establish a service-level speedup. Candidate recheck pending."
+    "interpretation": "Candidate-published-candidate sequence completed 32/32 in each run. Candidate throughput was 0.27% and 0.54% above the intervening published MOD run, a small difference relative to prior serving variation; no service-level speedup established.",
+    "candidate_output_throughput_changes_percent": [
+      0.2741032426410328,
+      0.542978278763151
+    ],
+    "candidate_mean_output_throughput_tokens_per_s": 27.015481136263602,
+    "candidate_mean_change_percent": 0.4085407607020919
   }
 }

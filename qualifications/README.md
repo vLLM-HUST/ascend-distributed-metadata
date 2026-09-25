@@ -58,7 +58,8 @@ candidate). The candidate was 26.8% and 32.4% faster in this sync-call scope.
 The exact [candidate microbenchmark script](benchmark_dp2_scalar_candidate.py)
 and original-result SHA256 hashes are included.
 
-One matched Qwen3.5 TP4/DP2 serving comparison completed 32/32 requests in
-both modes. Candidate output throughput was 26.979 tokens/s versus 26.906
-tokens/s for the published MOD. The 0.27% difference is too small to claim
-a service-level gain. Candidate serving recheck is pending.
+A Qwen3.5 TP4/DP2 candidate-published-candidate serving sequence completed
+32/32 requests in every run. Candidate output throughput was 26.979 and
+27.052 tokens/s versus 26.906 tokens/s for the intervening published MOD.
+The 0.27% and 0.54% differences are too small to establish a service-level
+gain against prior serving variation.
