@@ -1,0 +1,207 @@
+{
+  "schema_version": 1,
+  "evidence_type": "Qwen3.5-35B-A3B TP4/DP2 graph-mode ADM enabled/disabled comparison",
+  "date_utc": "2026-09-25",
+  "status": "complete; no ADM service-level speedup established",
+  "source": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "modelscope_revision": "712cf74392b05026a6db2bf213d343747d1f6d45",
+    "candidate_revision": "254be30e797cf3336ba5f1e79e04a0fc3e0e0f86",
+    "candidate_source_sha256": "4bb42bbd2eaceb6dfab95f4d5a9bb9f4195e6d0bb3cac34cead2e06b430eddfd",
+    "vllm_hust_core_revision": "e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0",
+    "vllm_ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5",
+    "benchmark_scenarios_sha256": "782177f7962e9ca855335d8a9269a325b3edb41b4682411cc7376a9f2027f91b"
+  },
+  "configuration": {
+    "device_type": "Ascend 910B2",
+    "devices": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "tensor_parallel_size": 4,
+    "data_parallel_size": 2,
+    "cudagraph_mode": "FULL_DECODE_ONLY",
+    "cudagraph_capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "graph_capture_confirmed_in_both_modes": true,
+    "max_model_len": 2048,
+    "max_num_seqs": 16,
+    "gpu_memory_utilization": 0.8,
+    "baseline_adm_enable": 0,
+    "candidate_adm_enable": 1,
+    "bench_request_rate": "inf",
+    "bench_seed": 0
+  },
+  "scenarios": {
+    "uniform_1024_256": {
+      "workload": {
+        "requests": 32,
+        "input_tokens_per_request": 1024,
+        "output_tokens_per_request": 256,
+        "random_range_ratio": 0,
+        "max_concurrency": 8
+      },
+      "runs": {
+        "candidate": [
+          {
+            "raw_result_sha256": "aa4824b56f97c80d046bfea0aecd6a7bb30a12d1f5ac065d41cde91a504b3d02",
+            "completed": 32,
+            "failed": 0,
+            "duration_s": 32.34540980029851,
+            "input_tokens": 32768,
+            "generated_tokens": 8192,
+            "output_throughput_tokens_per_s": 253.26623006410006,
+            "mean_ttft_ms": 1243.7855860043783,
+            "p99_ttft_ms": 2205.686606327072,
+            "mean_tpot_ms": 26.674238807640457,
+            "p99_tpot_ms": 29.541734915920625
+          },
+          {
+            "raw_result_sha256": "4bb005a5763cf5cc50c20dc45937466bb1ab8de71442bcdecaafedcbaf9bb1e0",
+            "completed": 32,
+            "failed": 0,
+            "duration_s": 31.23905314039439,
+            "input_tokens": 32768,
+            "generated_tokens": 8192,
+            "output_throughput_tokens_per_s": 262.2358610929581,
+            "mean_ttft_ms": 1073.3447477978189,
+            "p99_ttft_ms": 1616.959999911487,
+            "mean_tpot_ms": 26.36453482247067,
+            "p99_tpot_ms": 29.15296350280736
+          }
+        ],
+        "baseline": [
+          {
+            "raw_result_sha256": "e008b6a0367a5a827599c840bc0c810e9f81731c78e2759ed301a3e621dc6067",
+            "completed": 32,
+            "failed": 0,
+            "duration_s": 32.13258562609553,
+            "input_tokens": 32768,
+            "generated_tokens": 8192,
+            "output_throughput_tokens_per_s": 254.94369159471276,
+            "mean_ttft_ms": 1250.9775238868315,
+            "p99_ttft_ms": 2250.9832795802504,
+            "mean_tpot_ms": 26.518009473482948,
+            "p99_tpot_ms": 29.772633499045874
+          },
+          {
+            "raw_result_sha256": "29305056c653148b66476e9d7eb5ee932622cfcdff6850fe0f6841ae7b686418",
+            "completed": 32,
+            "failed": 0,
+            "duration_s": 31.0129067087546,
+            "input_tokens": 32768,
+            "generated_tokens": 8192,
+            "output_throughput_tokens_per_s": 264.14808766336915,
+            "mean_ttft_ms": 1092.1868208388332,
+            "p99_ttft_ms": 1604.0226753614843,
+            "mean_tpot_ms": 26.07680446475141,
+            "p99_tpot_ms": 28.92656491495961
+          }
+        ]
+      },
+      "mean_output_throughput_tokens_per_s": {
+        "baseline": 259.54588962904097,
+        "candidate": 257.7510455785291
+      },
+      "candidate_change_percent": -0.6915324504183751
+    },
+    "length_skew_768_128": {
+      "workload": {
+        "requests": 64,
+        "random_input_len": 768,
+        "random_output_len": 128,
+        "random_range_ratio": 0.75,
+        "max_concurrency": 16
+      },
+      "runs": {
+        "baseline": [
+          {
+            "raw_result_sha256": "fc222c4d88b70fa6927beddb8d0d8ac7380e8ecffbbd7c2d4fb7a1deb421e8c2",
+            "completed": 64,
+            "failed": 0,
+            "duration_s": 35.603001698851585,
+            "input_tokens": 49877,
+            "generated_tokens": 8338,
+            "output_throughput_tokens_per_s": 234.1937365429767,
+            "mean_ttft_ms": 720.4132820916129,
+            "p99_ttft_ms": 2078.3265199512243,
+            "mean_tpot_ms": 57.92816146371475,
+            "p99_tpot_ms": 91.65206076260259
+          },
+          {
+            "raw_result_sha256": "d87c21eb0cea474ba5de1a897d3b87f5986e88a9b6b12bfd1e912238627940dc",
+            "completed": 64,
+            "failed": 0,
+            "duration_s": 33.62795596104115,
+            "input_tokens": 49877,
+            "generated_tokens": 8338,
+            "output_throughput_tokens_per_s": 247.94846316736547,
+            "mean_ttft_ms": 690.9165619290434,
+            "p99_ttft_ms": 2006.7832922004163,
+            "mean_tpot_ms": 55.03295960659244,
+            "p99_tpot_ms": 85.41410921300026
+          }
+        ],
+        "candidate": [
+          {
+            "raw_result_sha256": "0f4a8a03d882f2bc5494981e83f30011113f40206eae413c74e90a0315ae1091",
+            "completed": 64,
+            "failed": 0,
+            "duration_s": 36.417403100058436,
+            "input_tokens": 49877,
+            "generated_tokens": 8338,
+            "output_throughput_tokens_per_s": 228.95646834264855,
+            "mean_ttft_ms": 862.9841777292313,
+            "p99_ttft_ms": 2643.2242820505053,
+            "mean_tpot_ms": 58.260919708923744,
+            "p99_tpot_ms": 91.42363095626311
+          },
+          {
+            "raw_result_sha256": "d28b045a64dd0576689b3da4582dc128f7b7bd87ad0a0fdb5ab01717b0005a43",
+            "completed": 64,
+            "failed": 0,
+            "duration_s": 34.80504139792174,
+            "input_tokens": 49877,
+            "generated_tokens": 8338,
+            "output_throughput_tokens_per_s": 239.5629961956567,
+            "mean_ttft_ms": 710.9132389450679,
+            "p99_ttft_ms": 2023.4476068429647,
+            "mean_tpot_ms": 56.76397493735504,
+            "p99_tpot_ms": 92.35239089516168
+          }
+        ]
+      },
+      "mean_output_throughput_tokens_per_s": {
+        "baseline": 241.0710998551711,
+        "candidate": 234.2597322691526
+      },
+      "candidate_change_percent": -2.8254600365247295
+    }
+  },
+  "interpretation": {
+    "uniform": "Candidate mean output throughput was slightly lower than the MOD-disabled graph baseline. No service speedup.",
+    "length_skew": "Candidate mean output throughput was lower than the MOD-disabled graph baseline; observed warmup/run variation also prevents a precise regression estimate. No service speedup.",
+    "graph_vs_eager": "Both graph modes substantially outperform the earlier eager runs, but that is a graph-configuration effect; it cannot be attributed to ADM.",
+    "primitive": "The separate CPU/Gloo scalar-sync microbenchmark remains positive, but it does not predict full-model serving speedup."
+  },
+  "script_sha256": {
+    "candidate_start": "bf12fd2dd4dc3231d9139664a47ef3c569d444ba9e8a58377494181cdba0650b",
+    "baseline_start": "06ad7640f3ca2e3d19e78db3f4ca07a223524e7622cab1660c3eb4a0addf62e2",
+    "candidate_uniform_bench": "b7f8f0d970ee8823427d4cccf9cefd2df8eaac14bc11300d6f283bbe44a93225",
+    "baseline_uniform_bench": "43c9b512c2c2e78c339615e15a567b7bc060a40838f0787a845153f66ba010f5",
+    "candidate_length_skew_bench": "30fa122688c3b67f4eb597dab7dab9e6ad6d210d18fe9da756f8a4789f2a22f8",
+    "baseline_length_skew_bench": "32686823fef9082dc75e8ba3c85f0563303e15bd96d30b8af1dc86e2df1b48ca"
+  }
+}
