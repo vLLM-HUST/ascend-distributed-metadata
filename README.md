@@ -50,6 +50,8 @@ group-visible sentinel; all ranks then run the original collective.
 
 ## Verification status
 
-The package has no NPU test result yet. A positive performance claim requires
-a clean matched baseline, treatment, and independent recheck with completed
-requests and no rank errors.
+The [Qwen3.5-35B-A3B TP4/DP1 smoke test](qualifications/README.md) completed 32/32
+requests on Ascend 910B2. DP1 uses the native metadata path, so this does not
+establish a MOD speedup. A positive performance claim requires a clean matched
+DP2 baseline, treatment, and independent recheck with completed requests and
+no rank errors.
