@@ -13,6 +13,7 @@ import importlib
 import inspect
 import os
 import textwrap
+from array import array
 from collections.abc import Callable
 from typing import Any
 
@@ -29,6 +30,7 @@ DP2_SLOT_MASK = (1 << DP2_SLOT_BITS) - 1
 DP2_MAX_TOKENS = (DP2_SLOT_MASK >> 2)
 DP2_MAX_VALUE = (DP2_MAX_TOKENS << 2) | 2
 DP2_SENTINEL = 3
+INT32_ARRAY_COMPAT = array("i").itemsize == 4
 
 
 class PackedSyncViolation(RuntimeError):
@@ -124,12 +126,13 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
             or is_draft_model
             or (allow_dp_padding and enable_sp(self.vllm_config))
         )
-        if should_pad:
-            token_vector = torch.full(
-                (self.dp_size,), max_tokens, device="cpu", dtype=torch.int32
-            )
+        vector_values = [max_tokens] * self.dp_size if should_pad else tokens
+        if INT32_ARRAY_COMPAT:
+            # frombuffer retains the new array, so the caller may mutate this
+            # vector without changing a later metadata step.
+            token_vector = torch.frombuffer(array("i", vector_values), dtype=torch.int32)
         else:
-            token_vector = torch.tensor(tokens, device="cpu", dtype=torch.int32)
+            token_vector = torch.tensor(vector_values, device="cpu", dtype=torch.int32)
         return max_tokens, token_vector, synced_mode
 
     packed_sync.__name__ = original.__name__

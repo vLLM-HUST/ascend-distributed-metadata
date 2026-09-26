@@ -124,6 +124,9 @@ def test_dp2_repeated_steps_reset_local_slot_and_preserve_returned_vector():
 
     assert (first[0], first[1].tolist(), first[2]) == (11, [11, 11], Mode.FULL)
     assert (second[0], second[1].tolist(), second[2]) == (15, [15, 3], Mode.NONE)
+    first[1][:] = 19
+    assert first[1].tolist() == [19, 19]
+    assert second[1].tolist() == [15, 3]
     assert [call[0].tolist() for call in dist.calls] == [
         [packed_sync._encode(11, Mode.FULL) << packed_sync.DP2_SLOT_BITS],
         [packed_sync._encode(3, Mode.FULL) << packed_sync.DP2_SLOT_BITS],
