@@ -85,3 +85,10 @@ comparison](qualifications/qwen35-dp2-word-group-cache-20260926.json) found
 against the preceding experimental branch. Four TP2/DP2 Qwen3.5 service
 sessions showed only a small throughput difference; serving acceleration
 remains unestablished.
+
+The [experimental token-vector comparison](qualifications/qwen35-dp2-frombuffer-token-vector-20260926.json)
+changes this branch's output tensor construction. It reduced the isolated
+metadata-call time by 9.4%–11.3% in three comparisons against the word/group
+cache branch. A matched Qwen3.5 service sequence did not show a throughput
+gain. Treat this implementation as a measured local optimization candidate,
+not a qualified serving acceleration.

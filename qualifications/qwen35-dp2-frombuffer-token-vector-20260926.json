@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "date_utc": "2026-09-26",
+  "evidence_type": "experimental DP2 token-vector construction",
+  "conclusion": "The fresh array-backed tensor reduced isolated CPU/Gloo DP2 metadata-call time in three repetitions. Qwen3.5 TP2/DP2 A-B-A-B serving completed all requests but did not show a repeatable throughput gain; keep this as an experimental candidate, not a service speedup claim.",
+  "change": "Build a fresh, writable int32 CPU token vector from a Python array via torch.frombuffer; fall back to torch.tensor when native array int width is not four bytes. PyTorch retains the array while the tensor is alive.",
+  "source": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "modelscope_revision": "712cf74392b05026a6db2bf213d343747d1f6d45",
+    "baseline_branch": "perf/cache-dp2-group",
+    "baseline_revision": "52644d96e42979c8a70905926805822139ac674e",
+    "baseline_source_sha256": "943330e194ad047d569379ce27fd5c30f045c303b98437619e4d8ba87ea39578",
+    "candidate_branch": "perf/frombuffer-token-vector",
+    "candidate_source_revision": "baa8aea7eebf91814b70b19fb6d064a6361d9f60",
+    "candidate_source_sha256": "d6241ac5c0e17508676477bad61aefd3c77ff2ac8f24d686cdb99d668cf47665",
+    "vllm_hust_core_revision": "e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0",
+    "vllm_ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5"
+  },
+  "host_tests": {
+    "passed": 17,
+    "failed": 0,
+    "checks": [
+      "collective shape and fallback",
+      "repeated metadata steps",
+      "caller mutation of one returned vector does not change the next"
+    ]
+  },
+  "microbenchmark": {
+    "scope": "two local CPU/Gloo processes, metadata method only; 8 alternating blocks of 400 calls per run",
+    "script": "benchmark_dp2_scalar_candidate.py",
+    "script_sha256": "e3a35d716c4c69d9650070332647331f283b7c13a0cb1954c596d726131ac97e",
+    "runs": [
+      {
+        "local_run_id": "dp2-frombuffer-vs-wordgroup-1-20260926-WOdSK5",
+        "result_sha256": "f7a6f9b8f450de6d6fa89e53bb5215be689f7e47a8cc13c6cd295a5051ee851e",
+        "baseline_ms_per_call": 0.20770432078279555,
+        "candidate_ms_per_call": 0.18822443089447916,
+        "candidate_change_percent": -9.378663773050377,
+        "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+        "timing_blocks": 8
+      },
+      {
+        "local_run_id": "dp2-frombuffer-vs-wordgroup-2-20260926-WV3oYn",
+        "result_sha256": "a6e297c871f1ced597f1522cf86c6fa1cccacf141acd7bbf807054fd6f1b08fd",
+        "baseline_ms_per_call": 0.19242088310420513,
+        "candidate_ms_per_call": 0.1731316721998155,
+        "candidate_change_percent": -10.024489334634012,
+        "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+        "timing_blocks": 8
+      },
+      {
+        "local_run_id": "dp2-frombuffer-vs-wordgroup-3-20260926-6iSTf7",
+        "result_sha256": "d9a3e2463d6f9da2bbf5178464dd21976fedad50901a61a686c42df39266cdf3",
+        "baseline_ms_per_call": 0.18659773282706738,
+        "candidate_ms_per_call": 0.16546005965210497,
+        "candidate_change_percent": -11.32793676252868,
+        "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+        "timing_blocks": 8
+      }
+    ]
+  },
+  "service": {
+    "platform": "Ascend 910B2",
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "tensor_parallel_size": 2,
+    "data_parallel_size": 2,
+    "api_server_count": 1,
+    "max_model_len": 2048,
+    "max_num_seqs": 32,
+    "gpu_memory_utilization": 0.8,
+    "graph_mode": "FULL_DECODE_ONLY",
+    "capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32
+    ],
+    "workload": {
+      "dataset": "random",
+      "num_prompts": 64,
+      "random_input_len": 768,
+      "random_output_len": 128,
+      "random_range_ratio": 0.75,
+      "seed": 0,
+      "max_concurrency": 16,
+      "request_rate": "inf"
+    },
+    "sequence": [
+      {
+        "name": "baseline_1",
+        "local_run_id": "qwen35-tp2-dp2-frombuffer-baseline-20260926-nz3s5R",
+        "source_sha256": "943330e194ad047d569379ce27fd5c30f045c303b98437619e4d8ba87ea39578",
+        "harness_sha256": "421b8b93992561e238d134d3b15d687f28d793332f5dec740af336980ec855be",
+        "rounds": [
+          {
+            "result_sha256": "08ebb7d23b283de73abc258862cf75b0a25971a49f694a2a8bbef072864c7f39",
+            "completed": 64,
+            "failed": 0,
+            "output_throughput_tokens_per_s": 232.02996071543635,
+            "mean_ttft_ms": 823.8962603209075,
+            "mean_tpot_ms": 57.902919576418576
+          },
+          {
+            "result_sha256": "dd69c9cc3bb19488e295bfef50a78162b2418eaaad9e5f26d43160079e190f85",
+            "completed": 64,
+            "failed": 0,
+            "output_throughput_tokens_per_s": 233.2847586839841,
+            "mean_ttft_ms": 701.4944762631785,
+            "mean_tpot_ms": 58.58461594902879
+          }
+        ]
+      },
+      {
+        "name": "candidate_1",
+        "local_run_id": "qwen35-tp2-dp2-frombuffer-candidate-20260926-3zmJfA",
+        "source_sha256": "d6241ac5c0e17508676477bad61aefd3c77ff2ac8f24d686cdb99d668cf47665",
+        "harness_sha256": "421b8b93992561e238d134d3b15d687f28d793332f5dec740af336980ec855be",
+        "rounds": [
+          {
+            "result_sha256": "ccd72d3618e57d4c94eeca30c521bd4bcc513e1ebd5e3ea2efd35a0b060eddb8",
+            "completed": 64,
+            "failed": 0,
+            "output_throughput_tokens_per_s": 228.1002595563623,
+            "mean_ttft_ms": 857.0617970690364,
+            "mean_tpot_ms": 58.84294345800678
+          },
+          {
+            "result_sha256": "6d10dff0113b29ea5d6d1d4039cbe19225dc046e40753de74428c755d7f94330",
+            "completed": 64,
+            "failed": 0,
+            "output_throughput_tokens_per_s": 227.89405294127516,
+            "mean_ttft_ms": 736.5684234973742,
+            "mean_tpot_ms": 60.165204349144446
+          }
+        ]
+      },
+      {
+        "name": "baseline_2",
+        "local_run_id": "qwen35-tp2-dp2-frombuffer-baseline-20260926-qOlIQc",
+        "source_sha256": "943330e194ad047d569379ce27fd5c30f045c303b98437619e4d8ba87ea39578",
+        "harness_sha256": "421b8b93992561e238d134d3b15d687f28d793332f5dec740af336980ec855be",
+        "rounds": [
+          {
+            "result_sha256": "4af8958c9cc5d38fbd3eba11eeed26b70764529639e08783c63ecafcb293fa84",
+            "completed": 64,
+            "failed": 0,
+            "output_throughput_tokens_per_s": 222.67683742447161,
+            "mean_ttft_ms": 862.4965317576425,
+            "mean_tpot_ms": 60.777568215439835
+          },
+          {
+            "result_sha256": "0ee30087bd376d4a1edb4c25056e07a79a0e890e58deb30349eafb35709fbea9",
+            "completed": 64,
+            "failed": 0,
+            "output_throughput_tokens_per_s": 229.68954421148626,
+            "mean_ttft_ms": 730.8765484922333,
+            "mean_tpot_ms": 59.65932976145645
+          }
+        ]
+      },
+      {
+        "name": "candidate_2",
+        "local_run_id": "qwen35-tp2-dp2-frombuffer-candidate-20260926-h1UENQ",
+        "source_sha256": "d6241ac5c0e17508676477bad61aefd3c77ff2ac8f24d686cdb99d668cf47665",
+        "harness_sha256": "421b8b93992561e238d134d3b15d687f28d793332f5dec740af336980ec855be",
+        "rounds": [
+          {
+            "result_sha256": "523b09d89dfcd9b006c054a3d084a7edac720087b4d21b5db7a0de9f6601de30",
+            "completed": 64,
+            "failed": 0,
+            "output_throughput_tokens_per_s": 223.2054246174334,
+            "mean_ttft_ms": 862.026706294273,
+            "mean_tpot_ms": 60.34400633650984
+          },
+          {
+            "result_sha256": "f30630cd1cc5ecab7f0cfee8a5193fca1c5a5670092c63019f86b30abacb8e40",
+            "completed": 64,
+            "failed": 0,
+            "output_throughput_tokens_per_s": 231.23590998127833,
+            "mean_ttft_ms": 724.0775697573554,
+            "mean_tpot_ms": 59.29452632521948
+          }
+        ]
+      }
+    ],
+    "warm_second_round_baseline_mean_output_tokens_per_s": 231.4871514477352,
+    "warm_second_round_candidate_mean_output_tokens_per_s": 229.56498146127674,
+    "warm_second_round_candidate_change_percent": -0.8303570951722627,
+    "interpretation": "The warm-run candidate mean was lower; variation across restarted baseline and candidate servers is larger than the isolated metadata-call saving. No service speedup is established."
+  },
+  "device_collective_exploration": {
+    "scope": "two local NPU workers, one int32 fill/collective/host read",
+    "local_run_id": "dp2-device-collective-20260926-6nb3EZ",
+    "result_sha256": "be421b50917b54ba0bb10503abc38bb81b984d276eae9be44ca3cb84f7c47c3d",
+    "script": "benchmark_dp2_device_collective.py",
+    "script_sha256": "fec89d5f69b50aa0646c0a5104d194bd955e39955ef7a9a7e777ce2467f52bba",
+    "cpu_gloo_ms_per_round_trip": 0.12444975436665118,
+    "npu_hccl_ms_per_round_trip": 0.32172006205655634,
+    "npu_change_percent": 158.5140193276008,
+    "decision": "Do not replace the CPU/Gloo collective with an NPU/HCCL round trip on this evidence."
+  },
+  "limits": [
+    "Pinned to the reviewed vLLM and Ascend revisions; other versions are not qualified.",
+    "Microbenchmark times include CPU/Gloo but not the Qwen model or NPU compute.",
+    "Service evaluation used TP2/DP2 on NPU 0\u20133 because NPU 7 was occupied.",
+    "Raw logs and detailed response data remain local; public record contains hashes and aggregate metrics only."
+  ]
+}

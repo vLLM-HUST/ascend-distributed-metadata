@@ -1,5 +1,22 @@
 # Qualification results
 
+## Experimental DP2 token-vector construction — 2026-09-26
+
+The [machine-readable record](qwen35-dp2-frombuffer-token-vector-20260926.json)
+covers a code change that builds a fresh, writable CPU token vector through
+`torch.frombuffer` and a Python `array('i')`. Three alternating two-process
+CPU/Gloo comparisons against the preceding plugin branch measured median
+metadata-call reductions of 9.4%, 10.0%, and 11.3%. All 17 host tests passed,
+including caller mutation and repeated-step checks.
+
+A Qwen3.5 TP2/DP2 baseline–candidate–baseline–candidate service sequence
+completed 64/64 requests in each of eight benchmark rounds. Warm second-round
+throughput was 233.3/229.7 tokens/s for the baseline and 227.9/231.2 for
+the candidate. This did not establish a service gain, so this branch remains
+experimental. A separate two-NPU diagnostic found that moving the scalar
+round trip from CPU/Gloo to NPU/HCCL was slower (0.124 versus 0.322 ms);
+the communication backend was left unchanged.
+
 ## DP2 word and CPU group reuse — 2026-09-26
 
 The [machine-readable result](qwen35-dp2-word-group-cache-20260926.json)
