@@ -108,6 +108,11 @@ def test_dp2_scalar_collective_preserves_sparse_and_padded_results():
 def test_dp2_repeated_steps_reset_local_slot_and_preserve_returned_vector():
     module, dist = module_for([packed_sync._encode(7, Mode.FULL),
                                packed_sync._encode(11, Mode.FULL)])
+    group_lookups = []
+    def get_group():
+        group_lookups.append(True)
+        return SimpleNamespace(cpu_group="reviewed-cpu-group")
+    module.get_dp_group = get_group
     runner = Runner(rank=1)
     runner.dp_size = 2
     wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
@@ -123,6 +128,7 @@ def test_dp2_repeated_steps_reset_local_slot_and_preserve_returned_vector():
         [packed_sync._encode(11, Mode.FULL) << packed_sync.DP2_SLOT_BITS],
         [packed_sync._encode(3, Mode.FULL) << packed_sync.DP2_SLOT_BITS],
     ]
+    assert len(group_lookups) == 1
 
 
 @pytest.mark.parametrize("bad_rank", [0, 1])

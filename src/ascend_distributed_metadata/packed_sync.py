@@ -88,9 +88,13 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
             if packed is None:
                 packed = torch.empty(1, device="cpu", dtype=torch.int32)
                 self._adm_dp2_word = packed
+            group = getattr(self, "_adm_dp2_cpu_group", None)
+            if group is None:
+                group = get_dp_group().cpu_group
+                self._adm_dp2_cpu_group = group
             # all_reduce is synchronous; reset the rank-local slot each step.
             packed.fill_(slot << (DP2_SLOT_BITS * self.dp_rank))
-            dist.all_reduce(packed, group=get_dp_group().cpu_group)
+            dist.all_reduce(packed, group=group)
             word = int(packed.item())
             values = [
                 (word >> (DP2_SLOT_BITS * rank)) & DP2_SLOT_MASK
