@@ -77,3 +77,11 @@ throughput gain. A separate, repeated high-concurrency configuration test
 found a 43.0% mean throughput increase by raising per-engine capacity from
 16 to 32 and capturing sizes 24 and 32; mean TPOT rose 27.1%. That gain is
 attributed to stack configuration, not this MOD implementation.
+
+This branch also reuses the DP2 scalar collective buffer and CPU process group
+for the lifetime of each model runner. The [2026-09-26 word/group cache
+comparison](qualifications/qwen35-dp2-word-group-cache-20260926.json) found
+2.3%–4.2% shorter local CPU/Gloo sync calls in three independent comparisons
+against the preceding experimental branch. Four TP2/DP2 Qwen3.5 service
+sessions showed only a small throughput difference; serving acceleration
+remains unestablished.

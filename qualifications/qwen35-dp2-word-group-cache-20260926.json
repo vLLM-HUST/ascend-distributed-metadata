@@ -1,0 +1,309 @@
+{
+  "schema_version": 1,
+  "date_utc": "2026-09-26",
+  "evidence_type": "DP2 plugin reuse of one int32 collective buffer and CPU process group",
+  "conclusion": "Three independent local CPU/Gloo comparisons each measured a shorter DP2 metadata sync call for the combined candidate. Four Qwen3.5 TP2/DP2 serving sessions completed every request; the warm-run service throughput difference was small relative to session variation and does not establish a repeatable serving speedup.",
+  "source": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "modelscope_revision": "712cf74392b05026a6db2bf213d343747d1f6d45",
+    "original_branch": "perf/graph-downgrade-unpad",
+    "original_revision": "a86cc687c00108382ce8f677139a968e663d8f92",
+    "original_source_sha256": "b9aa3df4a0a172574981737494a03486916b3c3ff127ebb6dec87d0c49c45c12",
+    "candidate_branch": "perf/cache-dp2-group",
+    "candidate_revision": "fe83e117ca822b7a1da7e89f9a9ab5c8133848f5",
+    "candidate_source_sha256": "943330e194ad047d569379ce27fd5c30f045c303b98437619e4d8ba87ea39578",
+    "vllm_hust_core_revision": "e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0",
+    "vllm_ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5"
+  },
+  "host_tests": {
+    "command": "TORCH_DEVICE_BACKEND_AUTOLOAD=0 PYTHONPATH=src python -m pytest -q tests",
+    "passed": 17,
+    "failed": 0
+  },
+  "activation_check": {
+    "plugin_installed": true,
+    "target_fingerprint": "3e3cac40908b68c65c45c820efca81073c0a11bef5eab13b2f8cf9ce36e407f5",
+    "candidate_module_imported_from_source_worktree": true
+  },
+  "microbenchmark": {
+    "scope": "two local CPU/Gloo processes; synchronous DP2 metadata method only, not NPU communication or model throughput",
+    "script": "benchmark_dp2_scalar_candidate.py",
+    "script_sha256": "e3a35d716c4c69d9650070332647331f283b7c13a0cb1954c596d726131ac97e",
+    "iterations_per_block": 400,
+    "blocks_per_run": 8,
+    "alternating_order": [
+      "published",
+      "candidate",
+      "candidate",
+      "published",
+      "published",
+      "candidate",
+      "candidate",
+      "published"
+    ],
+    "rounds": {
+      "reuse_word": [
+        {
+          "local_run_id": "reuse-dp2-word-micro-20260926-laIP4I",
+          "result_sha256": "3282b81f04fd20b8ee13471a020134d130ef0a5bbf128fc66f36258106f0c022",
+          "published_source_sha256": "b9aa3df4a0a172574981737494a03486916b3c3ff127ebb6dec87d0c49c45c12",
+          "candidate_source_sha256": "b8fc4b4311c8b1b10b54cc3773deae5cb8291bee6eb1199e65c39a58ea4b8894",
+          "published_ms_per_call": 0.21821250789798796,
+          "candidate_ms_per_call": 0.21314362878911197,
+          "candidate_change_percent": -2.322909514997018,
+          "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+          "timing_blocks": 8
+        },
+        {
+          "local_run_id": "reuse-dp2-word-micro-2-20260926-egSPa0",
+          "result_sha256": "f9333ada1bb14e374bacf131c7f685d57a8cfecf101e53b8b284c94a63be2caa",
+          "published_source_sha256": "b9aa3df4a0a172574981737494a03486916b3c3ff127ebb6dec87d0c49c45c12",
+          "candidate_source_sha256": "b8fc4b4311c8b1b10b54cc3773deae5cb8291bee6eb1199e65c39a58ea4b8894",
+          "published_ms_per_call": 0.21444611949846148,
+          "candidate_ms_per_call": 0.20894758286885917,
+          "candidate_change_percent": -2.564064410427236,
+          "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+          "timing_blocks": 8
+        },
+        {
+          "local_run_id": "reuse-dp2-word-micro-3-20260926-8NwYQ4",
+          "result_sha256": "de1facf8eca89093763a1090c080337dbc4c4d94c7d49cd1028a63a743540968",
+          "published_source_sha256": "b9aa3df4a0a172574981737494a03486916b3c3ff127ebb6dec87d0c49c45c12",
+          "candidate_source_sha256": "b8fc4b4311c8b1b10b54cc3773deae5cb8291bee6eb1199e65c39a58ea4b8894",
+          "published_ms_per_call": 0.2038218709640205,
+          "candidate_ms_per_call": 0.2003511891234666,
+          "candidate_change_percent": -1.7028014825585358,
+          "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+          "timing_blocks": 8
+        }
+      ],
+      "cache_group_incremental": [
+        {
+          "local_run_id": "cache-dp2-group-micro-1-20260926-BMj3wq",
+          "result_sha256": "fd585b1f3117e278c13b5f177c70a109bffbba6d141bd9bea260ff28c62e1847",
+          "published_source_sha256": "b8fc4b4311c8b1b10b54cc3773deae5cb8291bee6eb1199e65c39a58ea4b8894",
+          "candidate_source_sha256": "943330e194ad047d569379ce27fd5c30f045c303b98437619e4d8ba87ea39578",
+          "published_ms_per_call": 0.19415504997596145,
+          "candidate_ms_per_call": 0.19118215423077345,
+          "candidate_change_percent": -1.531196713943872,
+          "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+          "timing_blocks": 8
+        },
+        {
+          "local_run_id": "cache-dp2-group-micro-2-20260926-GHamJP",
+          "result_sha256": "6b3cdd2cae40359a072009fa706e1b2069e52aada52931313c6b30088c0d1d8b",
+          "published_source_sha256": "b8fc4b4311c8b1b10b54cc3773deae5cb8291bee6eb1199e65c39a58ea4b8894",
+          "candidate_source_sha256": "943330e194ad047d569379ce27fd5c30f045c303b98437619e4d8ba87ea39578",
+          "published_ms_per_call": 0.21296901511959732,
+          "candidate_ms_per_call": 0.19833330530673265,
+          "candidate_change_percent": -6.872224959412831,
+          "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+          "timing_blocks": 8
+        },
+        {
+          "local_run_id": "cache-dp2-group-micro-3-20260926-kKMKQz",
+          "result_sha256": "b4b2a4a5b81efbdd73b0ee147c00e8356766047bdbe68a62d54fd550e51017f9",
+          "published_source_sha256": "b8fc4b4311c8b1b10b54cc3773deae5cb8291bee6eb1199e65c39a58ea4b8894",
+          "candidate_source_sha256": "943330e194ad047d569379ce27fd5c30f045c303b98437619e4d8ba87ea39578",
+          "published_ms_per_call": 0.21111471694894135,
+          "candidate_ms_per_call": 0.2049973129760474,
+          "candidate_change_percent": -2.8976681783740688,
+          "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+          "timing_blocks": 8
+        }
+      ],
+      "combined_vs_original": [
+        {
+          "local_run_id": "dp2-word-group-vs-baseline-1-20260926-TJVDEU",
+          "result_sha256": "8cc18e72f8957dba61f2718890c9ef0c7977e0eddf11c631d1d6114486bb9e53",
+          "published_source_sha256": "b9aa3df4a0a172574981737494a03486916b3c3ff127ebb6dec87d0c49c45c12",
+          "candidate_source_sha256": "943330e194ad047d569379ce27fd5c30f045c303b98437619e4d8ba87ea39578",
+          "published_ms_per_call": 0.2049678296316415,
+          "candidate_ms_per_call": 0.19629536545835435,
+          "candidate_change_percent": -4.231134314527751,
+          "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+          "timing_blocks": 8
+        },
+        {
+          "local_run_id": "dp2-word-group-vs-baseline-2-20260926-8fA6t3",
+          "result_sha256": "a4808d4eedb9180bcf2b63fc8f4994dc1d2fbbb994a219ad1e1e70f41f27dd56",
+          "published_source_sha256": "b9aa3df4a0a172574981737494a03486916b3c3ff127ebb6dec87d0c49c45c12",
+          "candidate_source_sha256": "943330e194ad047d569379ce27fd5c30f045c303b98437619e4d8ba87ea39578",
+          "published_ms_per_call": 0.20721564651466906,
+          "candidate_ms_per_call": 0.2024556661490351,
+          "candidate_change_percent": -2.2971143568046193,
+          "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+          "timing_blocks": 8
+        },
+        {
+          "local_run_id": "dp2-word-group-vs-baseline-3-20260926-eT35ZL",
+          "result_sha256": "7079704075009473a492a879b4d60058e1dc5e15a8f73124ee315a36bc0c64c1",
+          "published_source_sha256": "b9aa3df4a0a172574981737494a03486916b3c3ff127ebb6dec87d0c49c45c12",
+          "candidate_source_sha256": "943330e194ad047d569379ce27fd5c30f045c303b98437619e4d8ba87ea39578",
+          "published_ms_per_call": 0.2016888721846044,
+          "candidate_ms_per_call": 0.19377795280888677,
+          "candidate_change_percent": -3.9223380497050098,
+          "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+          "timing_blocks": 8
+        }
+      ]
+    },
+    "combined_candidate_change_percent": [
+      -4.231134314527751,
+      -2.2971143568046193,
+      -3.9223380497050098
+    ]
+  },
+  "service": {
+    "platform": "Ascend 910B2",
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "tensor_parallel_size": 2,
+    "data_parallel_size": 2,
+    "api_server_count": 1,
+    "max_model_len": 2048,
+    "max_num_seqs": 32,
+    "gpu_memory_utilization": 0.8,
+    "graph_mode": "FULL_DECODE_ONLY",
+    "capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32
+    ],
+    "workload": {
+      "dataset": "random",
+      "num_prompts": 64,
+      "random_input_len": 768,
+      "random_output_len": 128,
+      "random_range_ratio": 0.75,
+      "seed": 0,
+      "max_concurrency": 16,
+      "request_rate": "inf"
+    },
+    "sequence": [
+      {
+        "name": "baseline_1",
+        "local_run_id": "qwen35-tp2-dp2-word-cache-baseline-20260926-OmJzAA",
+        "plugin_source_sha256": "b9aa3df4a0a172574981737494a03486916b3c3ff127ebb6dec87d0c49c45c12",
+        "harness_sha256": "fece0ae70293e9296f7d4bc07942c800ebec7440f02d4edfafb9715a2c163f6a",
+        "rounds": [
+          {
+            "result_sha256": "45fa766ecec76306702aad1d69ef86dbcb8b70071e42d90a880711fc0968b38b",
+            "completed": 64,
+            "failed": 0,
+            "duration_s": 43.70774270221591,
+            "output_throughput_tokens_per_s": 190.7671154927266,
+            "mean_ttft_ms": 2375.9893071546685,
+            "mean_tpot_ms": 61.081224612986254
+          },
+          {
+            "result_sha256": "b4ac500adbb1ed8b67be09bd969b40a96b544fb474f2a42ce491c9616e5e461a",
+            "completed": 64,
+            "failed": 0,
+            "duration_s": 35.93647285364568,
+            "output_throughput_tokens_per_s": 232.0205445302662,
+            "mean_ttft_ms": 712.8138344123727,
+            "mean_tpot_ms": 58.87743190102922
+          }
+        ]
+      },
+      {
+        "name": "candidate_1",
+        "local_run_id": "qwen35-tp2-dp2-word-cache-candidate-20260926-D20pJm",
+        "plugin_source_sha256": "943330e194ad047d569379ce27fd5c30f045c303b98437619e4d8ba87ea39578",
+        "harness_sha256": "fece0ae70293e9296f7d4bc07942c800ebec7440f02d4edfafb9715a2c163f6a",
+        "rounds": [
+          {
+            "result_sha256": "6cb670415d816b2c6a0af9a0ab08a55f770a01ac8f67c1f2c2f099ecc36c5dd0",
+            "completed": 64,
+            "failed": 0,
+            "duration_s": 36.10865930002183,
+            "output_throughput_tokens_per_s": 230.91413975580534,
+            "mean_ttft_ms": 834.97512761096,
+            "mean_tpot_ms": 58.216124054435554
+          },
+          {
+            "result_sha256": "752669579916f4fd4340b7ccf190533d55a3e8ea9f0012f67ca7e019c72285c9",
+            "completed": 64,
+            "failed": 0,
+            "duration_s": 35.59229613561183,
+            "output_throughput_tokens_per_s": 234.264178074688,
+            "mean_ttft_ms": 699.3269410304492,
+            "mean_tpot_ms": 58.50876130266115
+          }
+        ]
+      },
+      {
+        "name": "baseline_2",
+        "local_run_id": "qwen35-tp2-dp2-word-cache-baseline-20260926-PHiHWH",
+        "plugin_source_sha256": "b9aa3df4a0a172574981737494a03486916b3c3ff127ebb6dec87d0c49c45c12",
+        "harness_sha256": "b026b4b60053c1ea3c8f2a005ae1e8c70e39c0e89e6843063543221ce7af436d",
+        "rounds": [
+          {
+            "result_sha256": "b39c65212ace9f277c1525c56df65622b46b79bc66fcbdb10f723a760c81b66c",
+            "completed": 64,
+            "failed": 0,
+            "duration_s": 37.644821492023766,
+            "output_throughput_tokens_per_s": 221.4912880319187,
+            "mean_ttft_ms": 873.3857200277271,
+            "mean_tpot_ms": 60.814084212815615
+          },
+          {
+            "result_sha256": "93c5b982181dde2b60356ea4faf1e191fc7bd7c7f4629620b1db8df440b5be14",
+            "completed": 64,
+            "failed": 0,
+            "duration_s": 36.044468087144196,
+            "output_throughput_tokens_per_s": 231.32537231070623,
+            "mean_ttft_ms": 719.2634766543051,
+            "mean_tpot_ms": 59.27064452016155
+          }
+        ]
+      },
+      {
+        "name": "candidate_2",
+        "local_run_id": "qwen35-tp2-dp2-word-cache-candidate-20260926-BTh7p5",
+        "plugin_source_sha256": "943330e194ad047d569379ce27fd5c30f045c303b98437619e4d8ba87ea39578",
+        "harness_sha256": "b026b4b60053c1ea3c8f2a005ae1e8c70e39c0e89e6843063543221ce7af436d",
+        "rounds": [
+          {
+            "result_sha256": "1d4340fb580676de180cd64dd9ad73f3e0b64285131d0401c8039c511effa5ac",
+            "completed": 64,
+            "failed": 0,
+            "duration_s": 37.09970306791365,
+            "output_throughput_tokens_per_s": 224.74573407600315,
+            "mean_ttft_ms": 871.1056531319628,
+            "mean_tpot_ms": 59.71324611878128
+          },
+          {
+            "result_sha256": "aa579c13cf2971b978b485fa3c2db15a33d4870d94b64a2ca0df4edc9c4111df",
+            "completed": 64,
+            "failed": 0,
+            "duration_s": 35.86272533982992,
+            "output_throughput_tokens_per_s": 232.49766773133766,
+            "mean_ttft_ms": 731.3125692744507,
+            "mean_tpot_ms": 58.7326231540054
+          }
+        ]
+      }
+    ],
+    "warm_second_round_baseline_mean_output_tokens_per_s": 231.67295842048622,
+    "warm_second_round_candidate_mean_output_tokens_per_s": 233.38092290301284,
+    "warm_second_round_candidate_change_percent": 0.7372308335730215,
+    "interpretation": "The warm-second-round candidate mean is slightly higher; the effect is too small to separate confidently from session variation with two sessions per variant."
+  },
+  "limits": [
+    "Source is pinned to the reviewed vLLM/Ascend revisions; other versions are not qualified.",
+    "The CPU group is cached for each model runner lifetime, assuming the distributed process group does not change while that runner is in use.",
+    "NPU 7 was occupied by another process, so this new matched service comparison used TP2/DP2 on NPU 0–3; it must not be pooled with the earlier TP4/DP2 records.",
+    "First service session had a markedly slower first benchmark round, consistent with startup or warmup variation."
+  ]
+}

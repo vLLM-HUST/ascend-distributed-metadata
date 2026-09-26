@@ -1,5 +1,24 @@
 # Qualification results
 
+## DP2 word and CPU group reuse — 2026-09-26
+
+The [machine-readable result](qwen35-dp2-word-group-cache-20260926.json)
+records three repeated, alternating two-process CPU/Gloo measurements against
+the preceding experimental ADM source. Reusing the DP2 scalar collective
+buffer and its CPU process group shortened the median metadata sync call by
+2.3%–4.2% across the three direct comparisons. All 17 host tests passed,
+including repeated-step and fallback cases. This result is limited to the
+local metadata method and CPU/Gloo transport.
+
+Four Qwen3.5-35B-A3B TP2/DP2 service sessions on NPU 0–3 completed 64/64
+requests in each of two benchmark rounds. The sequence was baseline,
+candidate, baseline, candidate. Warm second-round output throughput was
+232.0 and 231.3 tokens/s for the baseline versus 234.3 and 232.5 for the
+candidate. The 0.7% mean difference is too small to establish a reliable
+serving speedup. The first baseline session's initial benchmark round was
+much slower, so first-round measurements are reported separately. NPU 7 was
+occupied; these TP2/DP2 runs are separate from the prior TP4/DP2 results.
+
 ## Graph padding and high-concurrency capacity — 2026-09-26
 
 The [machine-readable comparison](qwen35-dp2-graph-padding-capacity-20260926.json)
