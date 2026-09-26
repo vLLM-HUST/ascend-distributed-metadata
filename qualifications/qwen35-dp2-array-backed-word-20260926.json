@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "date_utc": "2026-09-26",
+  "evidence_type": "experimental DP2 array-backed scalar buffer",
+  "conclusion": "Three matched CPU/Gloo microbenchmarks improved metadata-call median by 4.31%, 4.82%, and 4.44%. The matched Qwen3.5 TP2/DP2 service pair completed all requests but showed no service throughput gain. Keep this as an experimental plugin-local optimization.",
+  "change": "Reuse an array-backed int32 CPU tensor for the DP2 scalar all-reduce, updating its sole element through the Python array rather than torch.Tensor.fill_. The benchmark gives each compared implementation a separate runner and cache.",
+  "source": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "modelscope_revision": "712cf74392b05026a6db2bf213d343747d1f6d45",
+    "baseline_branch": "perf/frombuffer-token-vector",
+    "baseline_revision": "4fc15a4565ea7ffff34aeed5335b3b3d907a0a58",
+    "baseline_source_sha256": "d6241ac5c0e17508676477bad61aefd3c77ff2ac8f24d686cdb99d668cf47665",
+    "candidate_branch": "perf/array-backed-dp2-word",
+    "candidate_source_revision": "5c388c0707f9e8f48eba75206712dc6d8ce2435c",
+    "candidate_source_sha256": "9bf5e0e9105d3bb04e54e50ef56abefc0393826256179aa0fac230ba820ad176",
+    "vllm_hust_core_revision": "e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0",
+    "vllm_ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5"
+  },
+  "host_tests": {
+    "passed": 17,
+    "failed": 0
+  },
+  "microbenchmark": {
+    "scope": "two local CPU/Gloo processes, metadata method only; 8 alternating blocks of 400 calls per run; separate runner/cache per variant",
+    "script": "benchmark_dp2_scalar_candidate.py",
+    "script_sha256": "ef071743f78af8c3cbb4ef76038471da9cbf7709aa24d86d6d047b23fc7fdcb6",
+    "runs": [
+      {
+        "local_run_id": "dp2-array-word-final-micro-20260926-qcqySC",
+        "result_sha256": "77936b9a3acac60846ea94b163e014cc8e31869ee8e6b175ba92a7b873f1014a",
+        "baseline_ms_per_call": 0.1814170612487942,
+        "candidate_ms_per_call": 0.1735991903115064,
+        "candidate_change_percent": -4.309336113964735,
+        "correctness": "native, published, and candidate returned (12, [8, 12], NONE)"
+      },
+      {
+        "local_run_id": "dp2-array-word-final-micro-20260926-D9nBq9",
+        "result_sha256": "3a2e568d02716f8c43cefebef4415625e62e889db9ae2f1a239ab7ad4d715741",
+        "baseline_ms_per_call": 0.16225225757807493,
+        "candidate_ms_per_call": 0.15443589305505157,
+        "candidate_change_percent": -4.817414956005884,
+        "correctness": "native, published, and candidate returned (12, [8, 12], NONE)"
+      },
+      {
+        "local_run_id": "dp2-array-word-final-micro-20260926-Pd5myv",
+        "result_sha256": "504b689395456dcc01c3ae5eace0f402ddbbe3af3d575c72db155a3d73c64902",
+        "baseline_ms_per_call": 0.18730340176261961,
+        "candidate_ms_per_call": 0.17897936748340726,
+        "candidate_change_percent": -4.444144741034595,
+        "correctness": "native, published, and candidate returned (12, [8, 12], NONE)"
+      }
+    ]
+  },
+  "service": {
+    "platform": "Ascend 910B2",
+    "devices": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "tensor_parallel_size": 2,
+    "data_parallel_size": 2,
+    "api_server_count": 1,
+    "max_model_len": 2048,
+    "max_num_seqs": 32,
+    "gpu_memory_utilization": 0.8,
+    "graph_mode": "FULL_DECODE_ONLY",
+    "capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32
+    ],
+    "workload": {
+      "dataset": "random",
+      "num_prompts": 64,
+      "random_input_len": 768,
+      "random_output_len": 128,
+      "random_range_ratio": 0.75,
+      "seed": 0,
+      "max_concurrency": 16
+    },
+    "sequence": [
+      {
+        "name": "baseline",
+        "local_run_id": "qwen35-tp2-dp2-array-word-baseline-20260926-AGbNF2",
+        "source_sha256": "d6241ac5c0e17508676477bad61aefd3c77ff2ac8f24d686cdb99d668cf47665",
+        "harness_sha256": "aad9decdf61e04f7b5a4c08dbfeec6df510f4621f724657190ecff651f94aac6",
+        "rounds": [
+          {
+            "result_sha256": "450695b271496c9d1f74ec6cf7e6172f56eb57d0d7495ae52575e625b1e3dca7",
+            "completed": 64,
+            "failed": 0,
+            "total_input_tokens": 49877,
+            "total_output_tokens": 8338,
+            "output_throughput_tokens_per_s": 227.69928591355483,
+            "mean_ttft_ms": 855.0649541284656,
+            "mean_tpot_ms": 59.298248067839616
+          },
+          {
+            "result_sha256": "9f17dd17e128ea7a8fa8254365d5e3f0e5534c379dd79282bfd2e30c31397afd",
+            "completed": 64,
+            "failed": 0,
+            "total_input_tokens": 49877,
+            "total_output_tokens": 8338,
+            "output_throughput_tokens_per_s": 234.1455930033763,
+            "mean_ttft_ms": 699.2692169296788,
+            "mean_tpot_ms": 58.52736077176157
+          }
+        ]
+      },
+      {
+        "name": "candidate",
+        "local_run_id": "qwen35-tp2-dp2-array-word-candidate-20260926-GJsdEo",
+        "source_sha256": "9bf5e0e9105d3bb04e54e50ef56abefc0393826256179aa0fac230ba820ad176",
+        "harness_sha256": "aad9decdf61e04f7b5a4c08dbfeec6df510f4621f724657190ecff651f94aac6",
+        "rounds": [
+          {
+            "result_sha256": "1e6c22cdf244f8055221ff409c8f455a8e258df77409e5e3aa557f2efc44a312",
+            "completed": 64,
+            "failed": 0,
+            "total_input_tokens": 49877,
+            "total_output_tokens": 8338,
+            "output_throughput_tokens_per_s": 227.48274657223652,
+            "mean_ttft_ms": 857.4818736233283,
+            "mean_tpot_ms": 59.07375996679848
+          },
+          {
+            "result_sha256": "47f5558f28424183bcb26dddfd407433b3068ccf768168b32c4eb39ea60dc6ad",
+            "completed": 64,
+            "failed": 0,
+            "total_input_tokens": 49877,
+            "total_output_tokens": 8338,
+            "output_throughput_tokens_per_s": 233.36884368375203,
+            "mean_ttft_ms": 706.0683986346703,
+            "mean_tpot_ms": 58.96053029086642
+          }
+        ]
+      }
+    ],
+    "interpretation": "The candidate produced essentially the same service throughput as the baseline; no end-to-end gain is established."
+  },
+  "limits": [
+    "Pinned to the reviewed vLLM and Ascend revisions.",
+    "CPU/Gloo microbenchmark times do not include Qwen model computation or NPU compute.",
+    "Raw logs and detailed response data remain local; this record contains hashes and aggregate metrics only."
+  ]
+}
