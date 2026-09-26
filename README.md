@@ -4,9 +4,13 @@ An independent, opt-in `vllm.general_plugins` package for the reviewed
 `NPUModelRunner._sync_metadata_across_dp` implementation. For DP2, this
 candidate packs both ranks into one `int32` and uses an all-reduce. Larger DP
 groups use one `int32` per rank with all-gather. Both paths reconstruct the
-native token vector, maximum token count, and minimum runtime graph mode.
+maximum token count and minimum runtime graph mode. In this experimental
+branch, when any rank downgrades graph execution to `NONE`, the token vector
+retains each rank's local count instead of padding a decode rank to another
+rank's prefill length. Draft-model and sequence-parallel padding remain on.
 The native collective uses a `2 x DP` `int32` tensor. This candidate is
-experimental; its service-level speedup is unconfirmed.
+experimental; its correctness and service-level speedup on real NPU serving
+are not yet established.
 
 ## Scope and compatibility
 

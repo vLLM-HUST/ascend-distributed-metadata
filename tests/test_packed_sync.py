@@ -48,13 +48,14 @@ class FakeDist:
         tensor.fill_(word)
 
 
-def module_for(values, *, skip=False):
+def module_for(values, *, skip=False, sequence_parallel=False):
     dist = FakeDist(values)
     module = SimpleNamespace(
         torch=torch,
         dist=dist,
         get_dp_group=lambda: SimpleNamespace(cpu_group="reviewed-cpu-group"),
         should_skip_allreduce_across_dp_group=lambda _config, _draft: skip,
+        enable_sp=lambda _config: sequence_parallel,
         CUDAGraphMode=Mode,
     )
     return module, dist
@@ -97,7 +98,7 @@ def test_dp2_scalar_collective_preserves_sparse_and_padded_results():
                      allow_dp_padding=True)
 
     assert (sparse[0], sparse[1].tolist(), sparse[2]) == (8191, counts, Mode.NONE)
-    assert (padded[0], padded[1].tolist(), padded[2]) == (8191, [8191] * 2, Mode.NONE)
+    assert (padded[0], padded[1].tolist(), padded[2]) == (8191, counts, Mode.NONE)
     assert [call[1] for call in dist.calls] == [1, 1]
     assert [call[0].tolist() for call in dist.calls] == [[values[0]],
                                                          [values[1] << 15]]
@@ -155,8 +156,25 @@ def test_rank_local_padding_choice_does_not_change_collective_shape():
                      allow_dp_padding=True)[1]
 
     assert sparse.tolist() == [7, 12, 3, 9]
-    assert padded.tolist() == [12, 12, 12, 12]
+    assert padded.tolist() == [7, 12, 3, 9]
     assert [call[1] for call in dist.calls] == [4, 4]
+
+
+def test_sequence_parallel_still_pads_when_graph_is_downgraded():
+    counts = [7, 12]
+    modes = [Mode.NONE, Mode.FULL]
+    values = [packed_sync._encode(n, m) for n, m in zip(counts, modes)]
+    module, dist = module_for(values, sequence_parallel=True)
+    wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+    runner = Runner(rank=1)
+    runner.dp_size = 2
+
+    maximum, vector, mode = wrapped(
+        runner, 12, cudagraph_mode=Mode.FULL, allow_dp_padding=True,
+    )
+
+    assert (maximum, vector.tolist(), mode) == (12, [12, 12], Mode.NONE)
+    assert [call[1] for call in dist.calls] == [1]
 
 
 def test_group_visible_sentinel_uses_native_collective_on_every_rank():
