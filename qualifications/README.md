@@ -1,5 +1,25 @@
 # Qualification results
 
+## Graph padding and high-concurrency capacity — 2026-09-26
+
+The [machine-readable comparison](qwen35-dp2-graph-padding-capacity-20260926.json)
+records Qwen3.5-35B-A3B TP4/DP2 runs on eight Ascend 910B2 devices. All
+recorded serving runs completed every request without a reported request
+error. With `FULL_DECODE_ONLY`, this experimental MOD branch nearly removed
+DP padding on steps whose synchronized graph mode was `NONE`. The A–B–A
+MOD-enabled/disabled throughput runs did **not** establish a repeatable
+end-to-end ADM speedup.
+
+For a separate 128-request synthetic workload at concurrency 64, increasing
+`--max-num-seqs` from 16 to 32 and adding graph capture sizes 24 and 32
+raised mean output throughput from 312.39 to 446.81 tokens/s (+43.0%) and
+reduced mean TTFT from 11.67 to 2.26 s (−80.6%) across two runs per
+configuration. Mean TPOT rose from 90.71 to 115.28 ms (+27.1%). Both
+configurations had the same MOD enabled. This is a stack configuration gain
+for the measured workload, not evidence that ADM source code accelerated
+serving. Generated text and raw logs remain local; result hashes and
+sanitized aggregate metrics are recorded in the JSON file.
+
 ## Qwen3.5-35B-A3B model smoke test — 2026-09-25
 
 The [machine-readable result](qwen35-35b-a3b-tp4-dp1-smoke-20260925.json)

@@ -1,0 +1,424 @@
+{
+  "schema_version": 1,
+  "evidence_type": "Qwen3.5-35B-A3B TP4/DP2 graph padding and capacity comparison",
+  "date_utc": "2026-09-26",
+  "conclusion": "Increasing per-engine max sequences from 16 to 32 with graph capture sizes 24 and 32 improved high-concurrency throughput and TTFT in a matched, repeated synthetic workload. This is stack configuration tuning. The experimental ADM branch nearly eliminated graph-downgrade padding, but the A-B-A serving comparison did not establish a repeatable ADM service speedup.",
+  "source": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "modelscope_revision": "712cf74392b05026a6db2bf213d343747d1f6d45",
+    "adm_branch": "perf/graph-downgrade-unpad",
+    "adm_source_revision": "ed91af0c09724f2f3160143933759643c2dbf96f",
+    "adm_source_sha256": "b9aa3df4a0a172574981737494a03486916b3c3ff127ebb6dec87d0c49c45c12",
+    "vllm_hust_core_revision": "e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0",
+    "vllm_ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5",
+    "benchmark_scenarios_sha256": "782177f7962e9ca855335d8a9269a325b3edb41b4682411cc7376a9f2027f91b"
+  },
+  "platform": {
+    "device_type": "Ascend 910B2",
+    "devices": 8,
+    "tensor_parallel_size": 4,
+    "data_parallel_size": 2,
+    "api_server_count": 1,
+    "max_model_len": 2048,
+    "gpu_memory_utilization": 0.8,
+    "graph_mode": "FULL_DECODE_ONLY"
+  },
+  "workloads": {
+    "skew_64": {
+      "dataset_name": "random",
+      "num_prompts": 64,
+      "random_input_len": 768,
+      "random_output_len": 128,
+      "random_range_ratio": 0.75,
+      "seed": 0,
+      "request_rate": "inf",
+      "max_concurrency": 16
+    },
+    "queue_128": {
+      "dataset_name": "random",
+      "num_prompts": 128,
+      "random_input_len": 768,
+      "random_output_len": 128,
+      "random_range_ratio": 0.75,
+      "seed": 0,
+      "request_rate": "inf",
+      "max_concurrency": 64
+    }
+  },
+  "runs": {
+    "size16_native_1": {
+      "local_run_id": "qwen35-dp2-bench-skew-graph-metrics-single-api-baseline-20260926-13aOSA",
+      "detailed_result_sha256": "fb3e6c4782afce4c84e764bc9296b21ffb2f94c1b0870b7d56933051890e7123",
+      "completed": 64,
+      "failed": 0,
+      "duration_s": 37.01258390583098,
+      "output_throughput_tokens_per_s": 225.27473416105997,
+      "mean_ttft_ms": 873.4071670332924,
+      "p99_ttft_ms": 2649.685349771753,
+      "mean_tpot_ms": 59.260795902326635,
+      "p99_tpot_ms": 92.79121523554575
+    },
+    "size16_native_2": {
+      "local_run_id": "qwen35-dp2-bench-skew-graph-metrics-single-api-baseline-20260926-HVhVJl",
+      "detailed_result_sha256": "60ecce3b944d96c12447685f9ffb66cff585aa8f009d201673c360fee3dc3048",
+      "completed": 64,
+      "failed": 0,
+      "duration_s": 34.494444753974676,
+      "output_throughput_tokens_per_s": 241.72008158036058,
+      "mean_ttft_ms": 721.735917191836,
+      "p99_ttft_ms": 2028.6466404423118,
+      "mean_tpot_ms": 56.06261259840306,
+      "p99_tpot_ms": 84.27329094822893
+    },
+    "size16_mod_1": {
+      "local_run_id": "qwen35-dp2-bench-skew-graph-downgrade-unpad-candidate-20260926-gFcbSq",
+      "detailed_result_sha256": "88afe85e342dba2447c0c2dd4c368253664bbb96e5605140b51e475e16117ce1",
+      "completed": 64,
+      "failed": 0,
+      "duration_s": 37.10755088087171,
+      "output_throughput_tokens_per_s": 224.6982029821346,
+      "mean_ttft_ms": 879.7142412076937,
+      "p99_ttft_ms": 2599.8442022688687,
+      "mean_tpot_ms": 59.55393458698428,
+      "p99_tpot_ms": 92.30020591642389
+    },
+    "size16_mod_2": {
+      "local_run_id": "qwen35-dp2-bench-skew-graph-downgrade-unpad-candidate-20260926-dxzFwg",
+      "detailed_result_sha256": "ce88e80ac67d8c00e798bc2463fc35ef54e8c58ed8fefb5689ef5a42d8e449b0",
+      "completed": 64,
+      "failed": 0,
+      "duration_s": 34.48493589088321,
+      "output_throughput_tokens_per_s": 241.786733383614,
+      "mean_ttft_ms": 692.0497976243496,
+      "p99_ttft_ms": 1773.3522798120966,
+      "mean_tpot_ms": 56.43768709207892,
+      "p99_tpot_ms": 85.12608141777044
+    },
+    "capacity16_1": {
+      "local_run_id": "qwen35-dp2-bench-queue-graph-downgrade-unpad-candidate-20260926-yKhMIm",
+      "detailed_result_sha256": "9bf1bdc1503fce6b0b9f1c29ea1309cfd6ae55cea9aaace43847887ec6761093",
+      "completed": 128,
+      "failed": 0,
+      "duration_s": 56.666303060017526,
+      "output_throughput_tokens_per_s": 302.896061206268,
+      "mean_ttft_ms": 11979.026566754328,
+      "p99_ttft_ms": 21518.01586602815,
+      "mean_tpot_ms": 93.95457494086573,
+      "p99_tpot_ms": 142.39126050215063
+    },
+    "capacity16_2": {
+      "local_run_id": "qwen35-dp2-bench-queue-graph-downgrade-unpad-candidate-20260926-oz7dxm",
+      "detailed_result_sha256": "9930860d4b055dbfa00aeec905d6d53fa3ea2a5411d0f123548861f5519844c6",
+      "completed": 128,
+      "failed": 0,
+      "duration_s": 53.32207650411874,
+      "output_throughput_tokens_per_s": 321.8929405098132,
+      "mean_ttft_ms": 11357.519670942565,
+      "p99_ttft_ms": 21034.407245535403,
+      "mean_tpot_ms": 87.47266095282458,
+      "p99_tpot_ms": 128.32487028940596
+    },
+    "capacity32_mod_1": {
+      "local_run_id": "qwen35-dp2-bench-queue-graph-capacity32-candidate-20260926-iSVJFv",
+      "detailed_result_sha256": "7e9da9177730ac23c37f3573593dbb5168fc5eba6a91a4ba629d2b44e3e5b17b",
+      "completed": 128,
+      "failed": 0,
+      "duration_s": 38.13270031195134,
+      "output_throughput_tokens_per_s": 450.1123670651919,
+      "mean_ttft_ms": 2257.3751560557866,
+      "p99_ttft_ms": 6162.710653208196,
+      "mean_tpot_ms": 113.5347696717876,
+      "p99_tpot_ms": 185.35807272302924
+    },
+    "capacity32_mod_2": {
+      "local_run_id": "qwen35-dp2-bench-queue-graph-capacity32-candidate-20260926-qYjGTe",
+      "detailed_result_sha256": "a724ef006665ad350c921e8c1452fc604a84bfb7af6def5f291a741bbe52d5cd",
+      "completed": 128,
+      "failed": 0,
+      "duration_s": 38.70078264269978,
+      "output_throughput_tokens_per_s": 443.50524273538656,
+      "mean_ttft_ms": 2267.4792232501204,
+      "p99_ttft_ms": 9895.124310618268,
+      "mean_tpot_ms": 117.02967021190467,
+      "p99_tpot_ms": 194.2157069901817
+    },
+    "capacity32_native_1": {
+      "local_run_id": "qwen35-dp2-bench-queue-graph-capacity32-native-20260926-HzIsPC",
+      "detailed_result_sha256": "f3bec5768a0bb669bfbd8edecf5e28d8d510e2e425fa87d694614512b1f06c0e",
+      "completed": 128,
+      "failed": 0,
+      "duration_s": 39.349467961117625,
+      "output_throughput_tokens_per_s": 436.1939535487559,
+      "mean_ttft_ms": 2283.173045143485,
+      "p99_ttft_ms": 6063.910737903789,
+      "mean_tpot_ms": 117.51768874268564,
+      "p99_tpot_ms": 185.07769138976823
+    },
+    "capacity32_native_2": {
+      "local_run_id": "qwen35-dp2-bench-queue-graph-capacity32-native-20260926-ws1x21",
+      "detailed_result_sha256": "b18d325535c361c25fc88157a27d647f1661fdb8bf4b23772b347faf7521d58f",
+      "completed": 128,
+      "failed": 0,
+      "duration_s": 38.9666750729084,
+      "output_throughput_tokens_per_s": 440.4789468920657,
+      "mean_ttft_ms": 2348.242564868997,
+      "p99_ttft_ms": 11828.211535951126,
+      "mean_tpot_ms": 118.16615537364284,
+      "p99_tpot_ms": 172.6230451620536
+    },
+    "capacity32_mod_recheck": {
+      "local_run_id": "qwen35-dp2-bench-queue-graph-capacity32-candidate-20260926-n9aLWU",
+      "detailed_result_sha256": "4f04da1101ac0e0eff30cdc567177461cd3224edcaf0ce6bb04afa0da5f137a5",
+      "completed": 128,
+      "failed": 0,
+      "duration_s": 39.81153000611812,
+      "output_throughput_tokens_per_s": 431.13138322898635,
+      "mean_ttft_ms": 2270.397024069098,
+      "p99_ttft_ms": 6288.206864073874,
+      "mean_tpot_ms": 120.09680150627702,
+      "p99_tpot_ms": 197.57347260802314
+    }
+  },
+  "graph_downgrade_unpadding": {
+    "workload": "skew_64",
+    "max_num_seqs": 16,
+    "native_run_plugin_source_revision_present_but_disabled": "0a92fce971e37e4a052c2dd06c515d4fd2968f04",
+    "mod_run_plugin_source_revision_enabled": "ed91af0c09724f2f3160143933759643c2dbf96f",
+    "capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "native_padding_two_runs": {
+      "0": {
+        "FULL": {
+          "steps": 1123,
+          "unpadded_tokens": 7987,
+          "padding_tokens": 3210,
+          "padding_over_unpadded_percent": 40.19
+        },
+        "NONE": {
+          "steps": 102,
+          "unpadded_tokens": 55701,
+          "padding_tokens": 34394,
+          "padding_over_unpadded_percent": 61.75
+        }
+      },
+      "1": {
+        "FULL": {
+          "steps": 1192,
+          "unpadded_tokens": 7151,
+          "padding_tokens": 4160,
+          "padding_over_unpadded_percent": 58.17
+        },
+        "NONE": {
+          "steps": 100,
+          "unpadded_tokens": 45463,
+          "padding_tokens": 41038,
+          "padding_over_unpadded_percent": 90.27
+        }
+      }
+    },
+    "mod_padding_two_runs": {
+      "0": {
+        "FULL": {
+          "steps": 1192,
+          "unpadded_tokens": 8027,
+          "padding_tokens": 3597,
+          "padding_over_unpadded_percent": 44.81
+        },
+        "NONE": {
+          "steps": 102,
+          "unpadded_tokens": 53029,
+          "padding_tokens": 100,
+          "padding_over_unpadded_percent": 0.19
+        }
+      },
+      "1": {
+        "FULL": {
+          "steps": 1169,
+          "unpadded_tokens": 7107,
+          "padding_tokens": 4494,
+          "padding_over_unpadded_percent": 63.23
+        },
+        "NONE": {
+          "steps": 100,
+          "unpadded_tokens": 48139,
+          "padding_tokens": 43,
+          "padding_over_unpadded_percent": 0.09
+        }
+      }
+    },
+    "interpretation": "The MOD removed almost all padding in NONE-mode iterations. Same-order native and MOD serving throughput was nearly equal; no service speedup is claimed."
+  },
+  "capacity_tuning": {
+    "workload": "queue_128",
+    "mod_enabled_in_both_configs": true,
+    "baseline": {
+      "max_num_seqs": 16,
+      "capture_sizes": [
+        1,
+        2,
+        4,
+        8,
+        16
+      ],
+      "run_keys": [
+        "capacity16_1",
+        "capacity16_2"
+      ]
+    },
+    "candidate": {
+      "max_num_seqs": 32,
+      "capture_sizes": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        24,
+        32
+      ],
+      "run_keys": [
+        "capacity32_mod_1",
+        "capacity32_mod_2"
+      ]
+    },
+    "mean_output_throughput_tokens_per_s": {
+      "baseline": 312.3945008580406,
+      "candidate": 446.80880490028926,
+      "candidate_change_percent": 43.02710312539391
+    },
+    "mean_ttft_ms": {
+      "baseline": 11668.273118848447,
+      "candidate": 2262.4271896529535,
+      "candidate_change_percent": -80.61043680921111
+    },
+    "mean_tpot_ms": {
+      "baseline": 90.71361794684515,
+      "candidate": 115.28221994184614,
+      "candidate_change_percent": 27.083697631150905
+    },
+    "interpretation": "This is a capacity and graph-capture configuration gain, not an ADM source-code gain. Mean TPOT increased under the larger active batch."
+  },
+  "mod_switch_at_capacity32": {
+    "workload": "queue_128",
+    "max_num_seqs": 32,
+    "capture_sizes": [
+      1,
+      2,
+      4,
+      8,
+      16,
+      24,
+      32
+    ],
+    "run_sequence": [
+      "capacity32_mod_1",
+      "capacity32_mod_2",
+      "capacity32_native_1",
+      "capacity32_native_2",
+      "capacity32_mod_recheck"
+    ],
+    "native_padding_two_runs": {
+      "0": {
+        "FULL": {
+          "steps": 672,
+          "unpadded_tokens": 12982,
+          "padding_tokens": 2041,
+          "padding_over_unpadded_percent": 15.72
+        },
+        "NONE": {
+          "steps": 141,
+          "unpadded_tokens": 105685,
+          "padding_tokens": 45348,
+          "padding_over_unpadded_percent": 42.91
+        }
+      },
+      "1": {
+        "FULL": {
+          "steps": 678,
+          "unpadded_tokens": 13374,
+          "padding_tokens": 1655,
+          "padding_over_unpadded_percent": 12.37
+        },
+        "NONE": {
+          "steps": 140,
+          "unpadded_tokens": 101805,
+          "padding_tokens": 46866,
+          "padding_over_unpadded_percent": 46.04
+        }
+      }
+    },
+    "mod_padding_two_runs": {
+      "0": {
+        "FULL": {
+          "steps": 653,
+          "unpadded_tokens": 12975,
+          "padding_tokens": 2669,
+          "padding_over_unpadded_percent": 20.57
+        },
+        "NONE": {
+          "steps": 137,
+          "unpadded_tokens": 103200,
+          "padding_tokens": 30,
+          "padding_over_unpadded_percent": 0.03
+        }
+      },
+      "1": {
+        "FULL": {
+          "steps": 678,
+          "unpadded_tokens": 13607,
+          "padding_tokens": 2096,
+          "padding_over_unpadded_percent": 15.4
+        },
+        "NONE": {
+          "steps": 136,
+          "unpadded_tokens": 104064,
+          "padding_tokens": 64,
+          "padding_over_unpadded_percent": 0.06
+        }
+      }
+    },
+    "mod_padding_recheck": {
+      "0": {
+        "FULL": {
+          "steps": 340,
+          "unpadded_tokens": 6523,
+          "padding_tokens": 856,
+          "padding_over_unpadded_percent": 13.12
+        },
+        "NONE": {
+          "steps": 71,
+          "unpadded_tokens": 50078,
+          "padding_tokens": 12,
+          "padding_over_unpadded_percent": 0.02
+        }
+      },
+      "1": {
+        "FULL": {
+          "steps": 318,
+          "unpadded_tokens": 6567,
+          "padding_tokens": 772,
+          "padding_over_unpadded_percent": 11.76
+        },
+        "NONE": {
+          "steps": 71,
+          "unpadded_tokens": 53755,
+          "padding_tokens": 25,
+          "padding_over_unpadded_percent": 0.05
+        }
+      }
+    },
+    "interpretation": "The first two MOD runs averaged above native, but the restarted MOD recheck was below both native runs. No repeatable serving throughput gain is established."
+  },
+  "limitations": [
+    "Synthetic random requests only; generated text and semantic model quality were not validated.",
+    "Two-run capacity comparison is evidence for this model, source pin, hardware and workload; it is not a universal tuning recommendation.",
+    "Padding metrics count runner token slots, not measured NPU energy or FLOPs.",
+    "A-B-A MOD comparison does not isolate the scalar collective change from graph-downgrade unpadding."
+  ]
+}

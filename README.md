@@ -69,3 +69,11 @@ CPU/Gloo sync-call measurements. A Qwen3.5 TP4/DP2 candidate-published-
 candidate serving sequence completed 32/32 requests in every run: candidate
 26.979 and 27.052 versus published MOD 26.906 output tokens/s. These 0.27%
 and 0.54% differences do not establish a service-level speedup.
+
+The [2026-09-26 graph-padding comparison](qualifications/qwen35-dp2-graph-padding-capacity-20260926.json)
+shows this branch nearly eliminated DP padding after graph-mode downgrade,
+but its A–B–A serving comparison did not establish a repeatable ADM
+throughput gain. A separate, repeated high-concurrency configuration test
+found a 43.0% mean throughput increase by raising per-engine capacity from
+16 to 32 and capturing sizes 24 and 32; mean TPOT rose 27.1%. That gain is
+attributed to stack configuration, not this MOD implementation.
