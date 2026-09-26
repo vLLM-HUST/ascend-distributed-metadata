@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "evidence_type": "Qwen3.5-35B-A3B TP4/DP2 high-concurrency stack configuration comparison",
+  "date_utc": "2026-09-26",
+  "conclusion": "For this 128-request synthetic workload, increasing per-engine max sequences from 16 to 32 and capturing graph sizes 24 and 32 increased two-run mean output throughput by 43.0% and reduced mean TTFT by 80.6%; mean TPOT increased by 27.1%. The ADM experimental MOD was enabled in both configurations, so this is a stack configuration gain, not evidence of an ADM source-code speedup.",
+  "source": {
+    "model": "Qwen/Qwen3.5-35B-A3B",
+    "modelscope_revision": "712cf74392b05026a6db2bf213d343747d1f6d45",
+    "adm_branch": "perf/graph-downgrade-unpad",
+    "adm_source_revision": "ed91af0c09724f2f3160143933759643c2dbf96f",
+    "adm_source_sha256": "b9aa3df4a0a172574981737494a03486916b3c3ff127ebb6dec87d0c49c45c12",
+    "vllm_hust_core_revision": "e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0",
+    "vllm_ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5",
+    "benchmark_scenarios_sha256": "782177f7962e9ca855335d8a9269a325b3edb41b4682411cc7376a9f2027f91b"
+  },
+  "experimental_mod_branch_record": "https://github.com/vLLM-HUST/ascend-distributed-metadata/blob/perf/graph-downgrade-unpad/qualifications/qwen35-dp2-graph-padding-capacity-20260926.json",
+  "platform": {
+    "device_type": "Ascend 910B2",
+    "devices": 8,
+    "tensor_parallel_size": 4,
+    "data_parallel_size": 2,
+    "api_server_count": 1,
+    "max_model_len": 2048,
+    "gpu_memory_utilization": 0.8,
+    "graph_mode": "FULL_DECODE_ONLY"
+  },
+  "workload": {
+    "dataset_name": "random",
+    "num_prompts": 128,
+    "random_input_len": 768,
+    "random_output_len": 128,
+    "random_range_ratio": 0.75,
+    "seed": 0,
+    "request_rate": "inf",
+    "max_concurrency": 64
+  },
+  "run_sequence": [
+    "capacity16_1",
+    "capacity32_mod_1",
+    "capacity32_mod_2",
+    "capacity16_2"
+  ],
+  "runs": {
+    "capacity16_1": {
+      "local_run_id": "qwen35-dp2-bench-queue-graph-downgrade-unpad-candidate-20260926-yKhMIm",
+      "detailed_result_sha256": "9bf1bdc1503fce6b0b9f1c29ea1309cfd6ae55cea9aaace43847887ec6761093",
+      "completed": 128,
+      "failed": 0,
+      "duration_s": 56.666303060017526,
+      "output_throughput_tokens_per_s": 302.896061206268,
+      "mean_ttft_ms": 11979.026566754328,
+      "p99_ttft_ms": 21518.01586602815,
+      "mean_tpot_ms": 93.95457494086573,
+      "p99_tpot_ms": 142.39126050215063
+    },
+    "capacity32_mod_1": {
+      "local_run_id": "qwen35-dp2-bench-queue-graph-capacity32-candidate-20260926-iSVJFv",
+      "detailed_result_sha256": "7e9da9177730ac23c37f3573593dbb5168fc5eba6a91a4ba629d2b44e3e5b17b",
+      "completed": 128,
+      "failed": 0,
+      "duration_s": 38.13270031195134,
+      "output_throughput_tokens_per_s": 450.1123670651919,
+      "mean_ttft_ms": 2257.3751560557866,
+      "p99_ttft_ms": 6162.710653208196,
+      "mean_tpot_ms": 113.5347696717876,
+      "p99_tpot_ms": 185.35807272302924
+    },
+    "capacity32_mod_2": {
+      "local_run_id": "qwen35-dp2-bench-queue-graph-capacity32-candidate-20260926-qYjGTe",
+      "detailed_result_sha256": "a724ef006665ad350c921e8c1452fc604a84bfb7af6def5f291a741bbe52d5cd",
+      "completed": 128,
+      "failed": 0,
+      "duration_s": 38.70078264269978,
+      "output_throughput_tokens_per_s": 443.50524273538656,
+      "mean_ttft_ms": 2267.4792232501204,
+      "p99_ttft_ms": 9895.124310618268,
+      "mean_tpot_ms": 117.02967021190467,
+      "p99_tpot_ms": 194.2157069901817
+    },
+    "capacity16_2": {
+      "local_run_id": "qwen35-dp2-bench-queue-graph-downgrade-unpad-candidate-20260926-oz7dxm",
+      "detailed_result_sha256": "9930860d4b055dbfa00aeec905d6d53fa3ea2a5411d0f123548861f5519844c6",
+      "completed": 128,
+      "failed": 0,
+      "duration_s": 53.32207650411874,
+      "output_throughput_tokens_per_s": 321.8929405098132,
+      "mean_ttft_ms": 11357.519670942565,
+      "p99_ttft_ms": 21034.407245535403,
+      "mean_tpot_ms": 87.47266095282458,
+      "p99_tpot_ms": 128.32487028940596
+    }
+  },
+  "configuration_comparison": {
+    "workload": "queue_128",
+    "mod_enabled_in_both_configs": true,
+    "baseline": {
+      "max_num_seqs": 16,
+      "capture_sizes": [
+        1,
+        2,
+        4,
+        8,
+        16
+      ],
+      "run_keys": [
+        "capacity16_1",
+        "capacity16_2"
+      ]
+    },
+    "candidate": {
+      "max_num_seqs": 32,
+      "capture_sizes": [
+        1,
+        2,
+        4,
+        8,
+        16,
+        24,
+        32
+      ],
+      "run_keys": [
+        "capacity32_mod_1",
+        "capacity32_mod_2"
+      ]
+    },
+    "mean_output_throughput_tokens_per_s": {
+      "baseline": 312.3945008580406,
+      "candidate": 446.80880490028926,
+      "candidate_change_percent": 43.02710312539391
+    },
+    "mean_ttft_ms": {
+      "baseline": 11668.273118848447,
+      "candidate": 2262.4271896529535,
+      "candidate_change_percent": -80.61043680921111
+    },
+    "mean_tpot_ms": {
+      "baseline": 90.71361794684515,
+      "candidate": 115.28221994184614,
+      "candidate_change_percent": 27.083697631150905
+    },
+    "interpretation": "This is a capacity and graph-capture configuration gain, not an ADM source-code gain. Mean TPOT increased under the larger active batch."
+  },
+  "limitations": [
+    "The workload uses synthetic random request lengths and a fixed seed; model output quality was not checked.",
+    "The result is limited to the pinned Qwen3.5 model, software revisions, eight Ascend 910B2 devices and 128-request concurrency-64 workload.",
+    "Mean TPOT worsened under the larger active batch.",
+    "This comparison holds the experimental MOD enabled in both configurations and cannot attribute its configuration gain to ADM code."
+  ]
+}

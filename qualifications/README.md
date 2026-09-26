@@ -1,5 +1,23 @@
 # Qualification results
 
+## High-concurrency graph capacity — 2026-09-26
+
+The [machine-readable comparison](qwen35-dp2-capacity-tuning-20260926.json)
+records four Qwen3.5-35B-A3B TP4/DP2 runs on eight Ascend 910B2 devices.
+Every run completed 128/128 synthetic requests without a reported request
+error. At concurrency 64, raising per-engine `--max-num-seqs` from 16 to 32
+and adding graph capture sizes 24 and 32 increased two-run mean output
+throughput from 312.39 to 446.81 tokens/s (+43.0%). Mean TTFT fell from
+11.67 to 2.26 s (−80.6%), while mean TPOT rose from 90.71 to 115.28 ms
+(+27.1%). The 16-sequence configuration was rerun after both 32-sequence
+runs and returned to its earlier throughput range.
+
+The same [experimental MOD branch](https://github.com/vLLM-HUST/ascend-distributed-metadata/tree/perf/graph-downgrade-unpad)
+was enabled in both configurations. This is a stack configuration gain for
+the measured workload, not an ADM source-code speedup. The branch records
+the separate graph-padding and MOD on/off checks. Generated text and raw
+logs remain local; result hashes and aggregate metrics are in the JSON.
+
 ## Qwen3.5-35B-A3B model smoke test — 2026-09-25
 
 The [machine-readable result](qwen35-35b-a3b-tp4-dp1-smoke-20260925.json)
