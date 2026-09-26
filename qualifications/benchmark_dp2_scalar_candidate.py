@@ -48,29 +48,32 @@ def worker(rank: int, run_root: str, published_path: str, candidate_path: str):
         "published": published._wrap(native, runner_module),
         "candidate": candidate._wrap(native, runner_module),
     }
-    runner = SimpleNamespace(dp_size=2, dp_rank=rank, vllm_config=object())
+    runners = {
+        name: SimpleNamespace(dp_size=2, dp_rank=rank, vllm_config=object())
+        for name in ("native", *methods)
+    }
     mode = runner_module.CUDAGraphMode.NONE
     tokens = (8, 12)[rank]
 
-    def invoke(method):
+    def invoke(method, name):
         maximum, vector, synced_mode = method(
-            runner, tokens, cudagraph_mode=mode, allow_dp_padding=False
+            runners[name], tokens, cudagraph_mode=mode, allow_dp_padding=False
         )
         return maximum, vector.tolist(), synced_mode
 
     expected = (12, [8, 12], mode)
-    assert invoke(native) == expected
-    assert all(invoke(method) == expected for method in methods.values())
-    for method in methods.values():
+    assert invoke(native, "native") == expected
+    assert all(invoke(method, name) == expected for name, method in methods.items())
+    for name, method in methods.items():
         for _ in range(WARMUP):
-            invoke(method)
+            invoke(method, name)
 
     blocks = []
     for name in SEQUENCE:
         dist.barrier()
         start = time.perf_counter()
         for _ in range(ITERATIONS):
-            methods[name](runner, tokens, cudagraph_mode=mode, allow_dp_padding=False)
+            methods[name](runners[name], tokens, cudagraph_mode=mode, allow_dp_padding=False)
         elapsed = torch.tensor(
             [(time.perf_counter() - start) * 1000], dtype=torch.float64
         )

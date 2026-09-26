@@ -88,14 +88,23 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
             slot = encoded if 0 <= encoded <= DP2_MAX_VALUE else DP2_SENTINEL
             packed = getattr(self, "_adm_dp2_word", None)
             if packed is None:
-                packed = torch.empty(1, device="cpu", dtype=torch.int32)
+                if INT32_ARRAY_COMPAT:
+                    word_buffer = array("i", [0])
+                    packed = torch.frombuffer(word_buffer, dtype=torch.int32)
+                    self._adm_dp2_word_buffer = word_buffer
+                else:
+                    packed = torch.empty(1, device="cpu", dtype=torch.int32)
                 self._adm_dp2_word = packed
             group = getattr(self, "_adm_dp2_cpu_group", None)
             if group is None:
                 group = get_dp_group().cpu_group
                 self._adm_dp2_cpu_group = group
             # all_reduce is synchronous; reset the rank-local slot each step.
-            packed.fill_(slot << (DP2_SLOT_BITS * self.dp_rank))
+            local_word = slot << (DP2_SLOT_BITS * self.dp_rank)
+            if INT32_ARRAY_COMPAT:
+                self._adm_dp2_word_buffer[0] = local_word
+            else:
+                packed.fill_(local_word)
             dist.all_reduce(packed, group=group)
             word = int(packed.item())
             values = [
