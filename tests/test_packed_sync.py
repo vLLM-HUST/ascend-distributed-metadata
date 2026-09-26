@@ -105,6 +105,26 @@ def test_dp2_scalar_collective_preserves_sparse_and_padded_results():
     assert [runner.native_calls for runner in runners] == [0, 0]
 
 
+def test_dp2_repeated_steps_reset_local_slot_and_preserve_returned_vector():
+    module, dist = module_for([packed_sync._encode(7, Mode.FULL),
+                               packed_sync._encode(11, Mode.FULL)])
+    runner = Runner(rank=1)
+    runner.dp_size = 2
+    wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+
+    first = wrapped(runner, 11, cudagraph_mode=Mode.FULL)
+    dist.values = [packed_sync._encode(15, Mode.NONE),
+                   packed_sync._encode(3, Mode.FULL)]
+    second = wrapped(runner, 3, cudagraph_mode=Mode.FULL)
+
+    assert (first[0], first[1].tolist(), first[2]) == (11, [11, 11], Mode.FULL)
+    assert (second[0], second[1].tolist(), second[2]) == (15, [15, 3], Mode.NONE)
+    assert [call[0].tolist() for call in dist.calls] == [
+        [packed_sync._encode(11, Mode.FULL) << packed_sync.DP2_SLOT_BITS],
+        [packed_sync._encode(3, Mode.FULL) << packed_sync.DP2_SLOT_BITS],
+    ]
+
+
 @pytest.mark.parametrize("bad_rank", [0, 1])
 def test_dp2_out_of_range_rank_falls_back_on_both_ranks(bad_rank):
     counts = [7, 8]

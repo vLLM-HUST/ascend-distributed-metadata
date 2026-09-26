@@ -84,10 +84,12 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
         encoded = _encode(num_tokens, cudagraph_mode)
         if self.dp_size == 2:
             slot = encoded if 0 <= encoded <= DP2_MAX_VALUE else DP2_SENTINEL
-            packed = torch.tensor(
-                [slot << (DP2_SLOT_BITS * self.dp_rank)],
-                device="cpu", dtype=torch.int32,
-            )
+            packed = getattr(self, "_adm_dp2_word", None)
+            if packed is None:
+                packed = torch.empty(1, device="cpu", dtype=torch.int32)
+                self._adm_dp2_word = packed
+            # all_reduce is synchronous; reset the rank-local slot each step.
+            packed.fill_(slot << (DP2_SLOT_BITS * self.dp_rank))
             dist.all_reduce(packed, group=get_dp_group().cpu_group)
             word = int(packed.item())
             values = [
