@@ -24,7 +24,8 @@ def load_module(name: str, path: str):
     return module
 
 
-def worker(rank: int, run_root: str, published_path: str, candidate_path: str):
+def worker(rank: int, run_root: str, published_path: str, candidate_path: str,
+           graph_full: bool):
     import torch
     import torch.distributed as dist
     from vllm_ascend.worker import model_runner_v1 as runner_module
@@ -52,16 +53,19 @@ def worker(rank: int, run_root: str, published_path: str, candidate_path: str):
         name: SimpleNamespace(dp_size=2, dp_rank=rank, vllm_config=object())
         for name in ("native", *methods)
     }
-    mode = runner_module.CUDAGraphMode.NONE
+    mode = (runner_module.CUDAGraphMode.FULL if graph_full
+            else runner_module.CUDAGraphMode.NONE)
+    allow_dp_padding = graph_full
     tokens = (8, 12)[rank]
 
     def invoke(method, name):
         maximum, vector, synced_mode = method(
-            runners[name], tokens, cudagraph_mode=mode, allow_dp_padding=False
+            runners[name], tokens, cudagraph_mode=mode,
+            allow_dp_padding=allow_dp_padding
         )
         return maximum, vector.tolist(), synced_mode
 
-    expected = (12, [8, 12], mode)
+    expected = (12, [12, 12] if allow_dp_padding else [8, 12], mode)
     assert invoke(native, "native") == expected
     assert all(invoke(method, name) == expected for name, method in methods.items())
     for name, method in methods.items():
@@ -73,7 +77,8 @@ def worker(rank: int, run_root: str, published_path: str, candidate_path: str):
         dist.barrier()
         start = time.perf_counter()
         for _ in range(ITERATIONS):
-            methods[name](runners[name], tokens, cudagraph_mode=mode, allow_dp_padding=False)
+            methods[name](runners[name], tokens, cudagraph_mode=mode,
+                          allow_dp_padding=allow_dp_padding)
         elapsed = torch.tensor(
             [(time.perf_counter() - start) * 1000], dtype=torch.float64
         )
@@ -94,6 +99,7 @@ def worker(rank: int, run_root: str, published_path: str, candidate_path: str):
             "published_sha256": hashlib.sha256(Path(published_path).read_bytes()).hexdigest(),
             "candidate_sha256": hashlib.sha256(Path(candidate_path).read_bytes()).hexdigest(),
             "source_fingerprint": published.TARGET_FINGERPRINT,
+            "scenario": "graph_full_padded" if graph_full else "eager_unpadded",
             "iterations_per_block": ITERATIONS,
             "sequence": list(SEQUENCE),
             "blocks": blocks,
@@ -101,7 +107,7 @@ def worker(rank: int, run_root: str, published_path: str, candidate_path: str):
             "candidate_change_percent": (
                 medians["candidate"] / medians["published"] - 1
             ) * 100,
-            "correctness": "native, published, and candidate returned (12, [8, 12], NONE)",
+            "correctness": f"native, published, and candidate returned {expected!r}",
         }
         path = Path(run_root) / "result.json"
         path.write_text(json.dumps(result, indent=2) + "\n")
@@ -118,4 +124,8 @@ if __name__ == "__main__":
 
     root = Path(sys.argv[1]).resolve()
     assert root.is_dir() and not (root / "result.json").exists()
-    mp.spawn(worker, args=(str(root), sys.argv[2], sys.argv[3]), nprocs=2, join=True)
+    assert len(sys.argv) in (4, 5)
+    assert len(sys.argv) == 4 or sys.argv[4] == "full"
+    graph_full = len(sys.argv) == 5 and sys.argv[4] == "full"
+    mp.spawn(worker, args=(str(root), sys.argv[2], sys.argv[3], graph_full),
+             nprocs=2, join=True)
