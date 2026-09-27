@@ -9,10 +9,10 @@ publishes complete generation-bound snapshots, rejects stale or conflicting
 updates, and issues a recovery receipt only after restored counts reach a
 routing read. The independent `ADM_EPOCH_REPLICA_ENABLE` switch defaults off.
 
-The state machine has host correctness coverage, and its runtime hooks are in
-an isolated vLLM-HUST branch. A normal TP1/DP2 NPU smoke passed. Native
-matched recovery evidence is pending; this branch does not yet claim a
-serving speedup or #31 research acceptance.
+The state machine has 28 passing host tests, and its runtime hooks are in
+an isolated vLLM-HUST branch. TP1/DP2 NPU serving and a gated local
+replica-loss recovery check passed. Two matched serving rounds were flat;
+this branch does not claim a serving speedup or #31 research acceptance.
 
 An independent, opt-in `vllm.general_plugins` package for the reviewed
 `NPUModelRunner._sync_metadata_across_dp` implementation. For DP2, this
@@ -36,8 +36,9 @@ candidate is experimental; a service-level speedup is not yet established.
 - The plugin refuses a different target function body. Host tests check
   return values, fallback, and collective shape under simulated rank inputs.
   Qwen3.5 TP4/DP2 serving results are recorded in `qualifications/`.
-- This MOD optimizes per-call token and graph-mode synchronization. It does
-  not implement generation/epoch-bound metadata recovery.
+- The packed-sync MOD optimizes per-call token and graph-mode synchronization.
+  The separate opt-in DP load-metadata plugin validates per-rank frontiers
+  and restores a locally invalidated API replica from full snapshots.
 
 ## Install and enable
 

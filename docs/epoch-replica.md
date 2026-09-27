@@ -1,8 +1,8 @@
 # Epoch-bound DP load-metadata replica: engineering design
 
 Status: plugin state machine and isolated vLLM-HUST hooks are implemented and
-host-tested. A normal TP1/DP2 NPU smoke passed. Native recovery and throughput
-qualification remain open.
+host-tested. TP1/DP2 NPU serving and a gated local replica-loss recovery
+check passed. Two matched serving rounds did not establish a throughput gain.
 
 ## Real object and path
 
@@ -41,14 +41,15 @@ generations remain retired. After local replica invalidation, the next valid
 complete snapshot can restore readiness. A recovery receipt is created only
 when a subsequent routing read uses the restored state. The receipt binds the
 recovery ID, generations, publication sequence, rank frontiers, and snapshot
-hash. Raw events and receipt publication still require runtime integration.
+hash. The gated diagnostic logs the local invalidation and receipt; a durable
+receipt sink is not yet implemented.
 
 This generation identifies a **coordinator publication session**; it is not
 a worker process/topology epoch. `current_wave` identifies the existing DP
 request wave, not an arbitrary method invocation. The design does not claim
 worker crash recovery, elasticity, or the full research acceptance of #31.
 
-## Runtime hooks needed
+## Runtime hooks in the isolated core branch
 
 1. Load only the DP metadata plugin entry point in the coordinator process.
 2. Before native coordinator count adoption, ask the publisher to validate
