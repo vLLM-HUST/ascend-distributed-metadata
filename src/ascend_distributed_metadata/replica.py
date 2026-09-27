@@ -122,7 +122,7 @@ class FrontendReplica:
         self.recovery_receipts: list[dict] = []
         self.retired_generations: set[str] = set()
         self.rejected = {"stale_publication": 0, "stale_rank": 0, "stale_wave": 0,
-                         "retired_generation": 0}
+                         "retired_generation": 0, "unobserved_rank": 0}
 
     def invalidate(self, recovery_id: str, reason: str) -> None:
         if not recovery_id or not reason:
@@ -155,7 +155,8 @@ class FrontendReplica:
         # Coordinator defaults are useful at startup, but they are not a
         # recovery response from an observed rank.
         if self._invalidated is not None and any(rank.version == 0 for rank in ranks):
-            raise ReplicaViolation("unobserved_rank")
+            self.rejected["unobserved_rank"] += 1
+            return False
         digest = _digest(wire)
 
         if generation in self.retired_generations:

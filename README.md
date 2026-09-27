@@ -9,9 +9,10 @@ publishes complete generation-bound snapshots, rejects stale or conflicting
 updates, and issues a recovery receipt only after restored counts reach a
 routing read. The independent `ADM_EPOCH_REPLICA_ENABLE` switch defaults off.
 
-The state machine has host correctness coverage. Its runtime hooks in
-vLLM-HUST and native matched recovery evidence are pending. It does not yet
-claim a serving speedup or #31 research acceptance.
+The state machine has host correctness coverage, and its runtime hooks are in
+an isolated vLLM-HUST branch. A normal TP1/DP2 NPU smoke passed. Native
+matched recovery evidence is pending; this branch does not yet claim a
+serving speedup or #31 research acceptance.
 
 An independent, opt-in `vllm.general_plugins` package for the reviewed
 `NPUModelRunner._sync_metadata_across_dp` implementation. For DP2, this

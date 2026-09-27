@@ -1,8 +1,8 @@
 # Epoch-bound DP load-metadata replica: engineering design
 
-Status: plugin state machine implemented and host-tested; runtime integration
-requires two narrow hooks in the reviewed vLLM-HUST core. No native recovery
-receipt or throughput claim exists yet.
+Status: plugin state machine and isolated vLLM-HUST hooks are implemented and
+host-tested. A normal TP1/DP2 NPU smoke passed. Native recovery and throughput
+qualification remain open.
 
 ## Real object and path
 
@@ -61,8 +61,11 @@ worker crash recovery, elasticity, or the full research acceptance of #31.
    complete snapshot arrives.
 
 The hooks must be opt-in and preserve the original wire format when disabled.
-An isolated core branch will carry only these hooks; the protocol and tests
-remain in this ADM package.
+An isolated core branch carries only these hooks; the protocol and tests
+remain in this ADM package. During local replica invalidation, the asynchronous
+request entry waits up to 12 seconds while the stats task receives a new
+snapshot. A missing rank is a transient rejected snapshot; a timeout is an
+explicit request failure.
 
 For a bounded recovery qualification only,
 `ADM_REPLICA_INJECT_LOSS_AT_PUBLICATION_SEQ=N` invalidates the API process's

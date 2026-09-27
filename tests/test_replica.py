@@ -145,8 +145,8 @@ def test_recovery_cannot_claim_an_unobserved_rank():
     replica = FrontendReplica(2)
     assert replica.apply(publisher.publish(0, True))
     replica.invalidate("recovery-5", "local_replica_lost")
-    with pytest.raises(ReplicaViolation, match="unobserved_rank"):
-        replica.apply(publisher.publish(0, True))
+    assert not replica.apply(publisher.publish(0, True))
+    assert replica.rejected["unobserved_rank"] == 1
     assert not replica.ready
     publisher.observe(1, 0, 1, 0, 0)
     assert replica.apply(publisher.publish(0, True))
