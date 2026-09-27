@@ -8,6 +8,7 @@ from ascend_distributed_metadata.replica import (
     FrontendReplica,
     ReplicaViolation,
 )
+from ascend_distributed_metadata.replica_plugin import _DiagnosticFrontendReplica
 
 
 def test_rank_skew_uses_independent_frontiers_and_routes_from_full_snapshot():
@@ -149,3 +150,18 @@ def test_recovery_cannot_claim_an_unobserved_rank():
     assert not replica.ready
     publisher.observe(1, 0, 1, 0, 0)
     assert replica.apply(publisher.publish(0, True))
+
+
+def test_gated_local_loss_emits_receipt_only_after_routing_read(capsys):
+    publisher = CoordinatorPublisher(2, "coordinator-A")
+    publisher.observe(0, 0, 1, 1, 0)
+    publisher.observe(1, 0, 1, 0, 1)
+    replica = _DiagnosticFrontendReplica(2, inject_at=1)
+    assert replica.apply(publisher.publish(0, True))
+    assert not replica.apply(publisher.publish(0, True))
+    assert "adm_replica_fault_injected_publication=1" in capsys.readouterr().out
+    assert not replica.ready
+    assert replica.apply(publisher.publish(0, True))
+    assert not replica.recovery_receipts
+    assert replica.counts_for_route() == [[1, 0], [0, 1]]
+    assert "adm_recovery_receipt=" in capsys.readouterr().out

@@ -63,3 +63,11 @@ worker crash recovery, elasticity, or the full research acceptance of #31.
 The hooks must be opt-in and preserve the original wire format when disabled.
 An isolated core branch will carry only these hooks; the protocol and tests
 remain in this ADM package.
+
+For a bounded recovery qualification only,
+`ADM_REPLICA_INJECT_LOSS_AT_PUBLICATION_SEQ=N` invalidates the API process's
+local replica after it has accepted an initial snapshot and received a full
+two-rank publication with sequence at least `N`. It drops that one publication,
+then waits for a later complete snapshot. The gated diagnostic prints the
+injection sequence and the recovery receipt after a real routing read. This
+simulates local-copy loss; it is not a worker crash or a transport failure.
