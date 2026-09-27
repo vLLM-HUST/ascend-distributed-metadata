@@ -49,6 +49,9 @@ worker crash recovery, elasticity, or the full research acceptance of #31.
 2. Before native coordinator count adoption, ask the publisher to validate
    each rank's `SchedulerStats` update. Rejected stale stats do not overwrite
    the authoritative counts.
+   Each rank must publish its initial `(0, 0)` counts on its first loop, even
+   when unchanged, so an idle participant can contribute a real recovery
+   observation rather than a coordinator default.
 3. Encode each coordinator publication through the publisher, preserving the
    native message when the hook is disabled.
 4. In the API stats task, validate the encoded snapshot before assigning
