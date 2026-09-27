@@ -95,4 +95,7 @@ The [array-backed DP2 word comparison](qualifications/qwen35-dp2-array-backed-wo
 reduced isolated CPU/Gloo metadata-call time by 4.3%–4.8% against the prior
 experimental branch. Its Qwen3.5 serving pair was essentially flat. This
 branch retains that buffer optimization while restoring native DP padding
-semantics for a new trace-driven serving comparison.
+semantics. In the [2026-09-27 trace-driven comparison](qualifications/adm-dp2-trace-native-padding-20260927.json),
+six CPU/Gloo measurements found 37.5%–43.6% lower per-call time versus public
+`main`. Matched Qwen3.5 and Qwen3 MoE trace runs completed without request
+errors, but did not establish a repeatable serving throughput improvement.

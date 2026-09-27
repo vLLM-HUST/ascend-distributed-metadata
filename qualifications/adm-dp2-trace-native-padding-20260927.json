@@ -1,0 +1,266 @@
+{
+  "schema_version": 1,
+  "date_utc": "2026-09-27",
+  "evidence_type": "experimental ADM DP2 scalar-buffer optimization with native DP padding",
+  "conclusion": "Six matched two-process CPU/Gloo repetitions show 37.45%-43.57% lower eager and 39.30%-41.52% lower FULL-mode metadata-call median versus the public main plugin. All matched Qwen3.5 and quantized Qwen3 MoE trace requests completed, but service throughput did not show a repeatable improvement. This is a plugin-local optimization candidate, not a serving speedup claim.",
+  "change": "Retain the DP2 one-int32 collective, cached CPU group/word, and array-backed CPU token vector. Restore the reviewed Ascend padding decision to avoid the graph-unpad service regression.",
+  "source": {
+    "public_main_revision": "ca043155c98e6f1e68f50e277864b27a7a13e6e3",
+    "public_main_source_sha256": "01b19552600434cc5d7839657b961bc6c9378628b11e5e635d1fa1c22972ec98",
+    "candidate_branch": "perf/native-padding-array-word",
+    "candidate_source_revision": "e886ee1908ff54b542c2da64cb4c03141cbc587c",
+    "candidate_source_sha256": "c419e044f92a1c9a4a747b10aa1eda89d79c032a983f727b4516b03908978db7",
+    "vllm_hust_core_revision": "e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0",
+    "vllm_ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "qwen3moe_local_model_config_sha256": "39c0e8a6041b3647888f20449630c6269c4685194f4edfca89caeb8ea385c46d",
+    "qwen3moe_local_model_tokenizer_sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4",
+    "qwen3moe_local_model_index_sha256": "cea506bfda7724d762de6434025b298e03830b9caa81f73f77afbd40d2e33d5b"
+  },
+  "host_tests": {
+    "passed": 17,
+    "failed": 0
+  },
+  "microbenchmark": {
+    "scope": "two CPU/Gloo processes, one metadata method call, 8 alternating blocks of 400 calls per run; separate runner/cache per variant",
+    "script": "benchmark_dp2_scalar_candidate.py",
+    "script_sha256": "a5bffb6afa4a3a4b3ba30ec1fb599f25d32559fca0852832b21e486c4eec297c",
+    "runs": [
+      {
+        "scenario": "eager",
+        "local_run_id": "dp2-nativepad-vs-main-eager-20260927-uMcgWY",
+        "result_sha256": "0a242232a63761742e4de7ced52f526e0c8729f6a50f16765550cd8bb2f86dbb",
+        "published_ms_per_call": 0.28548419708386064,
+        "candidate_ms_per_call": 0.1725750241894275,
+        "candidate_change_percent": -39.55006058050429,
+        "correctness": "native, published, and candidate returned (12, [8, 12], <CUDAGraphMode.NONE: 0>)"
+      },
+      {
+        "scenario": "eager",
+        "local_run_id": "dp2-nativepad-vs-main-eager-20260927-3cCvuh",
+        "result_sha256": "23244a4373f9e2d0829671a50c604b5341a6bf9052e6a539fbc8d38e8de77dbd",
+        "published_ms_per_call": 0.28374401037581265,
+        "candidate_ms_per_call": 0.17747486475855112,
+        "candidate_change_percent": -37.45247185183236,
+        "correctness": "native, published, and candidate returned (12, [8, 12], <CUDAGraphMode.NONE: 0>)"
+      },
+      {
+        "scenario": "eager",
+        "local_run_id": "dp2-nativepad-vs-main-eager-20260927-yRtLrd",
+        "result_sha256": "a8e6de2f56cc6a1c04832e9c6bcd7488dad6495ec1aef9ac46a112d74a2ed9a4",
+        "published_ms_per_call": 0.3081230109091848,
+        "candidate_ms_per_call": 0.17387325526215136,
+        "candidate_change_percent": -43.570181678706824,
+        "correctness": "native, published, and candidate returned (12, [8, 12], <CUDAGraphMode.NONE: 0>)"
+      },
+      {
+        "scenario": "graph_full",
+        "local_run_id": "dp2-nativepad-vs-main-full-20260927-1nM4RT",
+        "result_sha256": "e0aee8aa43471f953f5bdf9fec7d9e819b61bc45d9e8e90dc1493bdf6a040a54",
+        "published_ms_per_call": 0.2982727880589664,
+        "candidate_ms_per_call": 0.17444509430788457,
+        "candidate_change_percent": -41.51491477211189,
+        "correctness": "native, published, and candidate returned (12, [12, 12], <CUDAGraphMode.FULL: 2>)"
+      },
+      {
+        "scenario": "graph_full",
+        "local_run_id": "dp2-nativepad-vs-main-full-20260927-CqLxcw",
+        "result_sha256": "cc197927c0e3eeac5f280479a0881839c6fa431f2e28ead4c0fe759729c5a1b6",
+        "published_ms_per_call": 0.24136655498296022,
+        "candidate_ms_per_call": 0.14651697827503085,
+        "candidate_change_percent": -39.29690122752321,
+        "correctness": "native, published, and candidate returned (12, [12, 12], <CUDAGraphMode.FULL: 2>)"
+      },
+      {
+        "scenario": "graph_full",
+        "local_run_id": "dp2-nativepad-vs-main-full-20260927-jkh3Od",
+        "result_sha256": "f2298171125dd60775f50a73b1d6284875fee88973de70cfabc89b75ba44a28b",
+        "published_ms_per_call": 0.29870871687307954,
+        "candidate_ms_per_call": 0.17618186655454338,
+        "candidate_change_percent": -41.01883989230802,
+        "correctness": "native, published, and candidate returned (12, [12, 12], <CUDAGraphMode.FULL: 2>)"
+      }
+    ]
+  },
+  "datasets": {
+    "qwen3moe": {
+      "prompt_content": "LooGLE shortdep_qa.jsonl",
+      "prompt_content_sha256": "8951521e8c8340a4e6aa5ffcb2e8f058cca154251915acf946e721fcf001e8c7",
+      "trace": "qwen_coder_blksz_16.jsonl",
+      "trace_sha256": "3d74974cebb7bccb69b1ca6ea210a44d9a3033443c0271ed015327284dea1aff",
+      "trace_type": "coder",
+      "selection": "highest input-length CV among nonoverlapping 64 eligible windows, input 64-1500, output 128-512, combined <=1950",
+      "arrival_scale": 0.05,
+      "workload_sha256": "3010faf313424f6158a1e9acefdc92a2a9fdf1b296d33cffa1ef2dead3b87c70"
+    },
+    "qwen35": {
+      "prompt_content": "LooGLE shortdep_qa.jsonl",
+      "prompt_content_sha256": "8951521e8c8340a4e6aa5ffcb2e8f058cca154251915acf946e721fcf001e8c7",
+      "trace": "qwen_traceA_blksz_16.jsonl",
+      "trace_sha256": "07cedc9ed8aff301994ac68ed4aede8123b7603673575eeba9dd677de663db17",
+      "trace_type": "text",
+      "selection": "highest input-length CV among nonoverlapping 64 eligible windows, input 64-1800, output 16-160, combined <=1950",
+      "arrival_scale": 0.15,
+      "workload_sha256": "c9a800375f8810f17206f5930a2f189fb52e8a49890d27208bbee67092be2656"
+    }
+  },
+  "service": {
+    "prefix_caching": false,
+    "sequence": [
+      {
+        "name": "qwen35_native",
+        "local_run_id": "qwen35-tp2-dp2-trace-native-20260927-VYyfY0",
+        "source_sha256": "c419e044f92a1c9a4a747b10aa1eda89d79c032a983f727b4516b03908978db7",
+        "workload_sha256": "c9a800375f8810f17206f5930a2f189fb52e8a49890d27208bbee67092be2656",
+        "harness_sha256": "28ea40e9bbb0358686e62830525dca3b95ed6d2682607251dfc3eda74236c60d",
+        "model": "Qwen3.5-35B-A3B",
+        "parallelism": "TP2/DP2",
+        "rounds": [
+          {
+            "result_sha256": "ab706c562753c9c078cb34c1783e68688bdee0a5b0ac5b05882f7a3a8b93cb60",
+            "completed": 64,
+            "failed": 0,
+            "total_input_tokens": 28698,
+            "total_output_tokens": 5926,
+            "output_throughput_tokens_per_s": 185.77540035494005,
+            "mean_latency_s": 7.027775497233961,
+            "p99_latency_s": 13.457836783109231
+          },
+          {
+            "result_sha256": "508dbd29ad626a8b5312acea18f6b366bef214d4d7d93b7cd6b2b271bcc997c8",
+            "completed": 64,
+            "failed": 0,
+            "total_input_tokens": 28698,
+            "total_output_tokens": 5926,
+            "output_throughput_tokens_per_s": 184.615007559567,
+            "mean_latency_s": 7.087033001662348,
+            "p99_latency_s": 13.513645896660163
+          }
+        ]
+      },
+      {
+        "name": "qwen35_mod",
+        "local_run_id": "qwen35-tp2-dp2-trace-mod-20260927-tJMb6d",
+        "source_sha256": "c419e044f92a1c9a4a747b10aa1eda89d79c032a983f727b4516b03908978db7",
+        "workload_sha256": "c9a800375f8810f17206f5930a2f189fb52e8a49890d27208bbee67092be2656",
+        "harness_sha256": "28ea40e9bbb0358686e62830525dca3b95ed6d2682607251dfc3eda74236c60d",
+        "model": "Qwen3.5-35B-A3B",
+        "parallelism": "TP2/DP2",
+        "rounds": [
+          {
+            "result_sha256": "f40c17ac32ac3bdb9a5d7e587f89984ff9bdd3f40e02621e3a32d8a39c80d0b0",
+            "completed": 64,
+            "failed": 0,
+            "total_input_tokens": 28698,
+            "total_output_tokens": 5926,
+            "output_throughput_tokens_per_s": 185.08407138384118,
+            "mean_latency_s": 7.061670142356888,
+            "p99_latency_s": 13.54129826811142
+          },
+          {
+            "result_sha256": "e6af07bc090a270c84fa4c735c71cdd550e897de8b742a0ac5cb58c0fc92326e",
+            "completed": 64,
+            "failed": 0,
+            "total_input_tokens": 28698,
+            "total_output_tokens": 5926,
+            "output_throughput_tokens_per_s": 183.49055926810644,
+            "mean_latency_s": 7.136025114101358,
+            "p99_latency_s": 13.590435974532737
+          }
+        ]
+      },
+      {
+        "name": "qwen3moe_native",
+        "local_run_id": "qwen3moe-tp1-dp2-coder-trace-native-20260927-z7nSUD",
+        "source_sha256": "c419e044f92a1c9a4a747b10aa1eda89d79c032a983f727b4516b03908978db7",
+        "workload_sha256": "3010faf313424f6158a1e9acefdc92a2a9fdf1b296d33cffa1ef2dead3b87c70",
+        "harness_sha256": "496f085c1241930e6444f8862c5d049dd856c9afb4f42872c7e63a59b54d253d",
+        "model": "Qwen3-30B-A3B-W8A8",
+        "parallelism": "TP1/DP2",
+        "rounds": [
+          {
+            "result_sha256": "fae3601359bca03c7b53b69a4516fb028d73b4554447e9f31401e92905528b3b",
+            "completed": 64,
+            "failed": 0,
+            "total_input_tokens": 41547,
+            "total_output_tokens": 20444,
+            "output_throughput_tokens_per_s": 462.08008052844633,
+            "mean_latency_s": 9.696774549331167,
+            "p99_latency_s": 16.43596474248916
+          },
+          {
+            "result_sha256": "6a33aab649782541670363f279bf3bed192d84c544db709911773def5ce66d2d",
+            "completed": 64,
+            "failed": 0,
+            "total_input_tokens": 41547,
+            "total_output_tokens": 20444,
+            "output_throughput_tokens_per_s": 461.3935331279246,
+            "mean_latency_s": 9.731911634051357,
+            "p99_latency_s": 16.313439050652086
+          }
+        ]
+      },
+      {
+        "name": "qwen3moe_mod",
+        "local_run_id": "qwen3moe-tp1-dp2-coder-trace-mod-20260927-u4ex2H",
+        "source_sha256": "c419e044f92a1c9a4a747b10aa1eda89d79c032a983f727b4516b03908978db7",
+        "workload_sha256": "3010faf313424f6158a1e9acefdc92a2a9fdf1b296d33cffa1ef2dead3b87c70",
+        "harness_sha256": "2a64cd6a49d7fb62e56fdea8aa5ed16daf8c70021b4f5f4f2506f143011d0d01",
+        "model": "Qwen3-30B-A3B-W8A8",
+        "parallelism": "TP1/DP2",
+        "rounds": [
+          {
+            "result_sha256": "55a41e9a5bd6396a65bd7807f6294fec47f87c0016e7000f0ca75db033da1ec5",
+            "completed": 64,
+            "failed": 0,
+            "total_input_tokens": 41547,
+            "total_output_tokens": 20444,
+            "output_throughput_tokens_per_s": 465.17590823224066,
+            "mean_latency_s": 9.629158480689512,
+            "p99_latency_s": 16.317929770611226
+          },
+          {
+            "result_sha256": "61c0201e0398dc43c4741c672acf612c07eef5aa74340a5e70cbf90c9da5690d",
+            "completed": 64,
+            "failed": 0,
+            "total_input_tokens": 41547,
+            "total_output_tokens": 20444,
+            "output_throughput_tokens_per_s": 454.7074130894729,
+            "mean_latency_s": 9.87529710799572,
+            "p99_latency_s": 16.65016297802329
+          }
+        ]
+      }
+    ],
+    "interpretation": "The Qwen3 MoE candidate first round was faster than native, but its second round was slower. Qwen3.5 candidate rounds were lower than native. No repeatable service throughput benefit is established."
+  },
+  "rejected_graph_unpad": {
+    "scope": "Qwen3-30B-A3B-W8A8 TP1/DP2 on the same Coder trace, same two rounds",
+    "native_run_id": "qwen3moe-tp1-dp2-coder-trace-native-20260927-z7nSUD",
+    "unpad_run_id": "qwen3moe-tp1-dp2-coder-unpad-mod-20260927-CNKIuJ",
+    "native_max_none_padding_tokens": 1708,
+    "unpad_max_none_padding_tokens": 7,
+    "native_output_throughput_tokens_per_s": [
+      462.08,
+      461.394
+    ],
+    "unpad_output_throughput_tokens_per_s": [
+      460.618,
+      459.104
+    ],
+    "interpretation": "Padding reduction took effect but did not improve model throughput or request latency.",
+    "result_sha256": [
+      "40644db78b5a39119484cc74629e86ee11f0d848029807c254ea3ee3b15524b4",
+      "eebd12517b88162fdd43845c44e2f185e870197b48b6d96e5b855b937d49a03b"
+    ]
+  },
+  "excluded_control": {
+    "model": "Qwen2.5-7B-Instruct",
+    "reason": "The reviewed Ascend should_skip_allreduce_across_dp_group returns True for dense models, so this model bypasses the plugin collective. Its 2026-09-27 TP1/DP2 runs are not ADM performance evidence."
+  },
+  "limits": [
+    "Pinned to reviewed vLLM-HUST and Ascend source revisions.",
+    "The Qwen3-30B-A3B-W8A8 local weight files were not fully hashed; config, tokenizer, and index hashes are recorded instead.",
+    "Raw prompt tokens, response details, and service logs remain local.",
+    "CPU/Gloo microbenchmarks exclude NPU model compute; service speedup is unestablished."
+  ]
+}

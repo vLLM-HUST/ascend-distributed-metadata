@@ -1,5 +1,28 @@
 # Qualification results
 
+## Trace-driven DP2 metadata candidate — 2026-09-27
+
+The [machine-readable record](adm-dp2-trace-native-padding-20260927.json)
+compares this experimental branch with public `main`. Six independent,
+alternating two-process CPU/Gloo runs passed correctness checks. The median
+metadata-call time fell by 37.5%–43.6% in eager mode and 39.3%–41.5% with
+FULL mode and DP padding. All 17 host tests passed. These timings isolate the
+ADM metadata method; they do not measure NPU communication or model throughput.
+
+Qwen3.5-35B-A3B TP2/DP2 and quantized Qwen3-30B-A3B TP1/DP2 serving used
+rank-skewed 64-request trace subsets with LooGLE prompt content. All requests
+completed in both baseline and candidate rounds. The Qwen3 MoE candidate was
+faster in the first round (465.18 versus 462.08 output tokens/s) and slower in
+the second (454.71 versus 461.39). Qwen3.5 candidate throughput was below
+baseline in both rounds. No repeatable serving gain was established.
+
+The earlier graph-unpad variant reduced the Qwen3 MoE trace's maximum observed
+eager-mode padding from 1708 to 7 tokens but did not improve serving. Dense
+Qwen2.5-7B runs are excluded from ADM evidence because the reviewed Ascend
+implementation skips this DP collective for dense models. Raw prompts,
+responses, and server logs remain local; the JSON records hashes and aggregate
+metrics.
+
 ## Experimental DP2 token-vector construction — 2026-09-26
 
 The [machine-readable record](qwen35-dp2-frombuffer-token-vector-20260926.json)
