@@ -91,9 +91,10 @@ class CoordinatorPublisher:
                                         waiting, running)
         return True
 
-    def publish(self, current_wave: int, engines_running: bool) -> dict:
+    def publish(self, current_wave: int, engines_running: bool,
+                counts_update: bool = True) -> dict:
         _number(current_wave)
-        if type(engines_running) is not bool:
+        if type(engines_running) is not bool or type(counts_update) is not bool:
             raise ReplicaViolation("invalid_running_state")
         self.publication_seq += 1
         return {
@@ -102,6 +103,7 @@ class CoordinatorPublisher:
             "publication_seq": self.publication_seq,
             "current_wave": current_wave,
             "engines_running": engines_running,
+            "counts_update": counts_update,
             "ranks": [rank.to_wire() for rank in self.ranks],
         }
 
@@ -116,6 +118,7 @@ class FrontendReplica:
         self.ranks: tuple[RankSnapshot, ...] = ()
         self.current_wave = 0
         self.engines_running = False
+        self.counts_update = False
         self._digest: str | None = None
         self._invalidated: tuple[str, str, str | None] | None = None
         self._pending_receipt: dict | None = None
@@ -144,8 +147,11 @@ class FrontendReplica:
         publication_seq = _number(wire.get("publication_seq"))
         current_wave = _number(wire.get("current_wave"))
         engines_running = wire.get("engines_running")
+        counts_update = wire.get("counts_update")
         if type(engines_running) is not bool:
             raise ReplicaViolation("invalid_running_state")
+        if type(counts_update) is not bool:
+            raise ReplicaViolation("invalid_counts_update")
         raw_ranks = wire.get("ranks")
         if not isinstance(raw_ranks, (list, tuple)) or len(raw_ranks) != self.rank_count:
             raise ReplicaViolation("incomplete_rank_set")
@@ -193,6 +199,9 @@ class FrontendReplica:
         self.ranks = ranks
         self.current_wave = current_wave
         self.engines_running = engines_running
+        # Native wave-only notifications preserve the API's local speculative
+        # waiting counts. A recovery always installs the full snapshot.
+        self.counts_update = counts_update or self._invalidated is not None
         self._digest = digest
         if self._invalidated is not None:
             recovery_id, reason, before = self._invalidated

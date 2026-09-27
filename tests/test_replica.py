@@ -25,6 +25,27 @@ def test_rank_skew_uses_independent_frontiers_and_routes_from_full_snapshot():
     assert replica.counts_for_route() == [[1, 3], [4, 1]]
 
 
+def test_wave_only_notification_preserves_local_counts_until_recovery():
+    publisher = CoordinatorPublisher(2, "coordinator-A")
+    publisher.observe(0, 0, 1, 1, 3)
+    publisher.observe(1, 0, 1, 5, 0)
+    replica = FrontendReplica(2)
+    assert replica.apply(publisher.publish(0, True))
+    assert replica.counts_update
+
+    assert replica.apply(publisher.publish(1, False, counts_update=False))
+    assert not replica.counts_update
+    assert replica.current_wave == 1
+    assert replica.snapshot_counts() == [[1, 3], [5, 0]]
+
+    replica.invalidate("recovery-wave", "local_replica_lost")
+    assert replica.apply(publisher.publish(1, False, counts_update=False))
+    assert replica.counts_update
+    assert not replica.recovery_receipts
+    assert replica.counts_for_route() == [[1, 3], [5, 0]]
+    assert replica.recovery_receipts[0]["recovery_id"] == "recovery-wave"
+
+
 def test_stale_duplicate_and_conflicting_publications():
     publisher = CoordinatorPublisher(2, "coordinator-A")
     publisher.observe(0, 0, 1, 1, 0)

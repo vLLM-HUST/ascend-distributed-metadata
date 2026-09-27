@@ -25,6 +25,11 @@ rank 1 can lag rank 0 without being treated as stale. A duplicate identity
 with different counts is an error; a lower identity cannot replace newer
 counts. Every publication contains a complete rank set, global wave/running
 state, and a strictly increasing publication sequence.
+The `counts_update` bit preserves the native distinction between periodic
+count publications and wave-only notifications. A wave-only notification
+advances the validated replica but leaves the API's speculative waiting
+counts intact. After explicit invalidation, even a wave-only publication
+installs its complete snapshot so recovery uses authoritative counts.
 The coordinator's initial zero counts are marked unobserved; they can seed
 ordinary startup routing but cannot satisfy a recovery receipt. Recovery
 requires a real stats update from every rank.
