@@ -1,5 +1,33 @@
 # Ascend Distributed Metadata MOD
 
+## Experimental workload-aware routing (v0.2)
+
+The `adm_packed_sync` entry point also supports an independent
+`ADM_WORKLOAD_ROUTING_ENABLE=1` switch for vLLM-HUST's reviewed internal DP
+load balancer. This is an engineering extension to the metadata consumer: it
+combines the coordinator's per-rank waiting/running counts with the prompt
+length and output-token budget of requests recently assigned by this API
+process. The estimate is removed after native output handling marks a request
+finished. A request's additional score is
+`max(0, min(16, input_tokens/512 + max_output_tokens/128) - 2)`; the existing
+count score remains `waiting*4 + running`.
+
+This routing path applies only to internal DP load balancing for text
+generation. Explicit rank selection, pooling, requests without a positive
+output-token budget, and deployments using external DP load balancing retain
+the native route. The patch checks the exact reviewed vLLM-HUST routing
+method fingerprint and refuses a different implementation. Both switches
+default to off; enable them independently:
+
+```bash
+VLLM_PLUGINS=ascend,ascend_kv_connector,ascend_model,ascend_model_loader,ascend_service_profiling,adm_packed_sync \
+ADM_WORKLOAD_ROUTING_ENABLE=1 ADM_PACKED_SYNC_ENABLE=0 vllm serve /path/to/model
+```
+
+This feature uses request-size metadata to make a real routing decision. It
+does not implement the #31 generation/epoch recovery mechanism. Its serving
+effect remains experimental until matched service measurements are recorded.
+
 An independent, opt-in `vllm.general_plugins` package for the reviewed
 `NPUModelRunner._sync_metadata_across_dp` implementation. For DP2, this
 candidate packs both ranks into one `int32` and uses an all-reduce. Larger DP

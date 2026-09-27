@@ -162,6 +162,11 @@ def install(runner_type: type[Any], runner_module: Any) -> bool:
 
 def register() -> None:
     """vLLM general-plugin entry point; disabled mode imports no Ascend code."""
+    # The same installed entry point can independently enable API-side
+    # workload routing. It must run before the worker-side fast return.
+    from .workload_routing import register as register_routing
+
+    register_routing()
     enabled = os.environ.get(ENABLE_ENV, "0")
     if enabled == "0":
         return
