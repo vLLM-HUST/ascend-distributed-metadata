@@ -47,6 +47,8 @@ def _wrap(original: Callable[..., Any]) -> Callable[..., Any]:
         if pending is None:
             pending = {}
             self._adm_pending_work = pending
+            if os.environ.get("ADM_ROUTING_DIAGNOSTICS") == "1":
+                print("adm_workload_routing_first_request=1", flush=True)
         # Native output handling removes completed IDs from reqs_in_flight.
         # Prune our estimates at the next dispatch; no output-path hook needed.
         active = self.reqs_in_flight
@@ -89,6 +91,8 @@ def install(client_type: type[Any]) -> bool:
         raise RoutingViolation("vLLM-HUST DP routing source does not match reviewed pin")
     setattr(client_type, ORIGINAL_ATTR, original)
     client_type.get_core_engine_for_request = _wrap(original)
+    if os.environ.get("ADM_ROUTING_DIAGNOSTICS") == "1":
+        print("adm_workload_routing_installed=1", flush=True)
     return True
 
 
