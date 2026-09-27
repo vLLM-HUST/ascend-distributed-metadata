@@ -98,7 +98,7 @@ def test_dp2_scalar_collective_preserves_sparse_and_padded_results():
                      allow_dp_padding=True)
 
     assert (sparse[0], sparse[1].tolist(), sparse[2]) == (8191, counts, Mode.NONE)
-    assert (padded[0], padded[1].tolist(), padded[2]) == (8191, counts, Mode.NONE)
+    assert (padded[0], padded[1].tolist(), padded[2]) == (8191, [8191, 8191], Mode.NONE)
     assert [call[1] for call in dist.calls] == [1, 1]
     assert [call[0].tolist() for call in dist.calls] == [[values[0]],
                                                          [values[1] << 15]]
@@ -122,7 +122,7 @@ def test_dp2_repeated_steps_reset_local_slot_and_preserve_returned_vector():
                    packed_sync._encode(3, Mode.FULL)]
     second = wrapped(runner, 3, cudagraph_mode=Mode.FULL)
 
-    assert (first[0], first[1].tolist(), first[2]) == (11, [11, 11], Mode.FULL)
+    assert (first[0], first[1].tolist(), first[2]) == (11, [7, 11], Mode.FULL)
     assert (second[0], second[1].tolist(), second[2]) == (15, [15, 3], Mode.NONE)
     first[1][:] = 19
     assert first[1].tolist() == [19, 19]
@@ -185,7 +185,7 @@ def test_rank_local_padding_choice_does_not_change_collective_shape():
                      allow_dp_padding=True)[1]
 
     assert sparse.tolist() == [7, 12, 3, 9]
-    assert padded.tolist() == [7, 12, 3, 9]
+    assert padded.tolist() == [12, 12, 12, 12]
     assert [call[1] for call in dist.calls] == [4, 4]
 
 

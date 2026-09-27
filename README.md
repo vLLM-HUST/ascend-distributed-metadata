@@ -4,13 +4,11 @@ An independent, opt-in `vllm.general_plugins` package for the reviewed
 `NPUModelRunner._sync_metadata_across_dp` implementation. For DP2, this
 candidate packs both ranks into one `int32` and uses an all-reduce. Larger DP
 groups use one `int32` per rank with all-gather. Both paths reconstruct the
-maximum token count and minimum runtime graph mode. In this experimental
-branch, when any rank downgrades graph execution to `NONE`, the token vector
-retains each rank's local count instead of padding a decode rank to another
-rank's prefill length. Draft-model and sequence-parallel padding remain on.
-The native collective uses a `2 x DP` `int32` tensor. This candidate is
-experimental; its correctness and service-level speedup on real NPU serving
-are not yet established.
+maximum token count and minimum runtime graph mode. This branch preserves
+the reviewed Ascend implementation's DP padding decision. Its DP2 scalar
+collective and returned token vector use array-backed CPU tensors to reduce
+host overhead. The native collective uses a `2 x DP` `int32` tensor. This
+candidate is experimental; a service-level speedup is not yet established.
 
 ## Scope and compatibility
 
@@ -71,7 +69,7 @@ candidate serving sequence completed 32/32 requests in every run: candidate
 and 0.54% differences do not establish a service-level speedup.
 
 The [2026-09-26 graph-padding comparison](qualifications/qwen35-dp2-graph-padding-capacity-20260926.json)
-shows this branch nearly eliminated DP padding after graph-mode downgrade,
+shows the earlier graph-unpad branch nearly eliminated DP padding after graph-mode downgrade,
 but its A–B–A serving comparison did not establish a repeatable ADM
 throughput gain. A separate, repeated high-concurrency configuration test
 found a 43.0% mean throughput increase by raising per-engine capacity from
@@ -92,3 +90,9 @@ metadata-call time by 9.4%–11.3% in three comparisons against the word/group
 cache branch. A matched Qwen3.5 service sequence did not show a throughput
 gain. Treat this implementation as a measured local optimization candidate,
 not a qualified serving acceleration.
+
+The [array-backed DP2 word comparison](qualifications/qwen35-dp2-array-backed-word-20260926.json)
+reduced isolated CPU/Gloo metadata-call time by 4.3%–4.8% against the prior
+experimental branch. Its Qwen3.5 serving pair was essentially flat. This
+branch retains that buffer optimization while restoring native DP padding
+semantics for a new trace-driven serving comparison.

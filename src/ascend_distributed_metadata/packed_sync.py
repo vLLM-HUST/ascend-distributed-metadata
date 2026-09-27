@@ -67,7 +67,6 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
     dist = runner_module.dist
     get_dp_group = runner_module.get_dp_group
     should_skip = runner_module.should_skip_allreduce_across_dp_group
-    enable_sp = runner_module.enable_sp
     graph_mode_type = runner_module.CUDAGraphMode
     default_mode = inspect.signature(original).parameters["cudagraph_mode"].default
 
@@ -127,14 +126,10 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
         tokens = [value >> 2 for value in values]
         max_tokens = max(tokens)
         synced_mode = graph_mode_type(min(value & 3 for value in values))
-        # A rank may request a graph while another rank runs prefill. Once the
-        # synchronized mode is NONE, graph padding is unnecessary. Preserve
-        # the separate sequence-parallel and draft-model requirements.
-        should_pad = (
-            synced_mode != graph_mode_type.NONE
-            or is_draft_model
-            or (allow_dp_padding and enable_sp(self.vllm_config))
-        )
+        # Match the pinned Ascend implementation's padding decision. A local
+        # graph request still requires DP padding when the group falls back to
+        # eager execution.
+        should_pad = allow_dp_padding or is_draft_model
         vector_values = [max_tokens] * self.dp_size if should_pad else tokens
         if INT32_ARRAY_COMPAT:
             # frombuffer retains the new array, so the caller may mutate this
