@@ -1,5 +1,18 @@
 # Ascend Distributed Metadata MOD
 
+## Experimental epoch-bound load-metadata replica
+
+This branch adds a [DP replica state machine](docs/epoch-replica.md) for the
+coordinator's waiting/running metadata and the API load balancer that consumes
+it. It validates each rank's real `current_wave`/`step_counter` frontier,
+publishes complete generation-bound snapshots, rejects stale or conflicting
+updates, and issues a recovery receipt only after restored counts reach a
+routing read. The independent `ADM_EPOCH_REPLICA_ENABLE` switch defaults off.
+
+The state machine has host correctness coverage. Its runtime hooks in
+vLLM-HUST and native matched recovery evidence are pending. It does not yet
+claim a serving speedup or #31 research acceptance.
+
 An independent, opt-in `vllm.general_plugins` package for the reviewed
 `NPUModelRunner._sync_metadata_across_dp` implementation. For DP2, this
 candidate packs both ranks into one `int32` and uses an all-reduce. Larger DP

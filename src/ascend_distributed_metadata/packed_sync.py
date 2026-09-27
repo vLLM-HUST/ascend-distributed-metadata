@@ -162,6 +162,9 @@ def install(runner_type: type[Any], runner_module: Any) -> bool:
 
 def register() -> None:
     """vLLM general-plugin entry point; disabled mode imports no Ascend code."""
+    from .replica_plugin import register as register_replica
+
+    register_replica()
     enabled = os.environ.get(ENABLE_ENV, "0")
     if enabled == "0":
         return
