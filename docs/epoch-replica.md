@@ -25,6 +25,9 @@ rank 1 can lag rank 0 without being treated as stale. A duplicate identity
 with different counts is an error; a lower identity cannot replace newer
 counts. Every publication contains a complete rank set, global wave/running
 state, and a strictly increasing publication sequence.
+The coordinator's initial zero counts are marked unobserved; they can seed
+ordinary startup routing but cannot satisfy a recovery receipt. Recovery
+requires a real stats update from every rank.
 
 The frontend validates the full snapshot before replacing the count data used
 for routing. Lower publication sequence, rank frontier, or global wave is

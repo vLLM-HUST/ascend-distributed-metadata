@@ -88,6 +88,8 @@ def test_recovery_requires_complete_snapshot_and_actual_consumer_use():
 def test_generation_change_needs_invalidation_and_retires_old_generation():
     old = CoordinatorPublisher(2, "coordinator-A")
     new = CoordinatorPublisher(2, "coordinator-B")
+    new.observe(0, 0, 1, 0, 0)
+    new.observe(1, 0, 1, 0, 0)
     replica = FrontendReplica(2)
     old_snapshot = old.publish(0, True)
     assert replica.apply(old_snapshot)
@@ -121,6 +123,8 @@ def test_wire_round_trip_and_invalid_generation():
 
 def test_global_wave_regression_and_unconsumed_receipt_are_rejected():
     publisher = CoordinatorPublisher(2, "coordinator-A")
+    publisher.observe(0, 0, 1, 0, 0)
+    publisher.observe(1, 0, 1, 0, 0)
     replica = FrontendReplica(2)
     assert replica.apply(publisher.publish(1, True))
     stale_wave = publisher.publish(0, True)
@@ -132,3 +136,16 @@ def test_global_wave_regression_and_unconsumed_receipt_are_rejected():
         replica.invalidate("recovery-4", "second_loss")
     replica.counts_for_route()
     replica.invalidate("recovery-4", "second_loss")
+
+
+def test_recovery_cannot_claim_an_unobserved_rank():
+    publisher = CoordinatorPublisher(2, "coordinator-A")
+    publisher.observe(0, 0, 1, 1, 0)
+    replica = FrontendReplica(2)
+    assert replica.apply(publisher.publish(0, True))
+    replica.invalidate("recovery-5", "local_replica_lost")
+    with pytest.raises(ReplicaViolation, match="unobserved_rank"):
+        replica.apply(publisher.publish(0, True))
+    assert not replica.ready
+    publisher.observe(1, 0, 1, 0, 0)
+    assert replica.apply(publisher.publish(0, True))

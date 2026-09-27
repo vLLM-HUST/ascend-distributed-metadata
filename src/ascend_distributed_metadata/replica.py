@@ -152,6 +152,10 @@ class FrontendReplica:
         ranks = tuple(RankSnapshot.from_wire(value) for value in raw_ranks)
         if tuple(rank.rank for rank in ranks) != tuple(range(self.rank_count)):
             raise ReplicaViolation("invalid_rank_set")
+        # Coordinator defaults are useful at startup, but they are not a
+        # recovery response from an observed rank.
+        if self._invalidated is not None and any(rank.version == 0 for rank in ranks):
+            raise ReplicaViolation("unobserved_rank")
         digest = _digest(wire)
 
         if generation in self.retired_generations:
