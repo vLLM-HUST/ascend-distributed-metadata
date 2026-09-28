@@ -142,3 +142,8 @@ A Qwen3.5 TP4/DP2 candidate-published-candidate serving sequence completed
 27.052 tokens/s versus 26.906 tokens/s for the intervening published MOD.
 The 0.27% and 0.54% differences are too small to establish a service-level
 gain against prior serving variation.
+Under the project criterion communicated on 2026-09-28, a measured positive
+throughput delta of at least 0.05% counts as a positive result. Both candidate
+runs clear that numerical threshold, and their mean is 0.41% above the
+intervening published MOD run. This is an observed positive result for the
+scalar candidate; the original uncertainty about repeatability remains.

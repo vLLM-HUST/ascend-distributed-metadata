@@ -172,6 +172,7 @@
       0.542978278763151
     ],
     "candidate_mean_output_throughput_tokens_per_s": 27.015481136263602,
-    "candidate_mean_change_percent": 0.4085407607020919
+    "candidate_mean_change_percent": 0.4085407607020919,
+    "project_acceptance_note_20260928": "The newly communicated numerical criterion accepts a measured positive throughput delta of at least 0.05%. Both candidate observations (0.27% and 0.54%) and their 0.41% mean clear that threshold. This does not remove the documented run-to-run uncertainty or establish a repeatable service speedup."
   }
 }
