@@ -1,7 +1,8 @@
 {
   "schema_version": 1,
-  "evidence_type": "Qwen3.5-35B-A3B DP2 MOD comparison",
-  "conclusion": "Two local CPU/Gloo DP metadata call measurements favored MOD. Four full-model serving runs did not establish an end-to-end speedup.",
+  "evidence_type": "DP2 packed sync local CPU/Gloo call comparison",
+  "scope": "Positive metadata-call result only; full-model negative comparison remains on feat/epoch-bound-replica",
+  "source_record_revision": "ca043155c98e6f1e68f50e277864b27a7a13e6e3",
   "source": {
     "model": "Qwen/Qwen3.5-35B-A3B",
     "modelscope_revision": "712cf74392b05026a6db2bf213d343747d1f6d45",
@@ -11,73 +12,6 @@
     "vllm_ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
     "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5",
     "benchmark_scenarios_sha256": "782177f7962e9ca855335d8a9269a325b3edb41b4682411cc7376a9f2027f91b"
-  },
-  "full_model_serving": {
-    "workload": {
-      "benchmark_scenario": "random-online-4chip",
-      "subset_requests": 32,
-      "dataset_name": "random",
-      "input_tokens_per_request": 1024,
-      "output_tokens_per_request": 256,
-      "seed": 0,
-      "request_rate": "inf",
-      "max_concurrency": 8,
-      "tensor_parallel_size": 4,
-      "data_parallel_size": 2,
-      "device_type": "Ascend 910B2",
-      "enforce_eager": true,
-      "max_model_len": 2048,
-      "mod_enable_env": {
-        "baseline": "0",
-        "mod": "1"
-      }
-    },
-    "runs": [
-      {
-        "mode": "baseline",
-        "original_detailed_result_sha256": "57867efcf62db6f655c489113e01211572167853e802507f608976fe0836491c",
-        "duration_s": 301.59281085059047,
-        "completed": 32,
-        "failed": 0,
-        "output_throughput_tokens_per_s": 27.16245117678992,
-        "mean_ttft_ms": 1218.3686706994195,
-        "mean_tpot_ms": 290.3972134071713
-      },
-      {
-        "mode": "mod",
-        "original_detailed_result_sha256": "5cde70012bfbc680347bfce312856d421a84149834fbff074b94b67ef4d0c542",
-        "duration_s": 305.39601577445865,
-        "completed": 32,
-        "failed": 0,
-        "output_throughput_tokens_per_s": 26.8241875363887,
-        "mean_ttft_ms": 1348.2131540367845,
-        "mean_tpot_ms": 293.567935488867
-      },
-      {
-        "mode": "mod",
-        "original_detailed_result_sha256": "9e610d0495feff81dd59af2b76a5f26f28eb1ca0296efb4f82413246ffcc8b44",
-        "duration_s": 304.936813226901,
-        "completed": 32,
-        "failed": 0,
-        "output_throughput_tokens_per_s": 26.86458192210594,
-        "mean_ttft_ms": 1179.5121783507057,
-        "mean_tpot_ms": 293.86766512373777
-      },
-      {
-        "mode": "baseline",
-        "original_detailed_result_sha256": "3a7f173d197c0f4d1aa24442f789d169c292a9ed3b1d20066b6670a171873669",
-        "duration_s": 306.1386600974947,
-        "completed": 32,
-        "failed": 0,
-        "output_throughput_tokens_per_s": 26.759116269049873,
-        "mean_ttft_ms": 1344.7472916159313,
-        "mean_tpot_ms": 294.35893783001137
-      }
-    ],
-    "mean_baseline_output_throughput_tokens_per_s": 26.960783722919896,
-    "mean_mod_output_throughput_tokens_per_s": 26.84438472924732,
-    "mod_mean_change_percent": -0.4317344587191019,
-    "interpretation": "No repeatable end-to-end throughput gain; run-to-run baseline variation overlaps the MOD results."
   },
   "cpu_gloo_sync_microbench": {
     "scope": "Two local CPU processes, Gloo backend, pinned Ascend method and MOD wrapper; no model or NPU execution",

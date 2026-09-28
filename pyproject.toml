@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ascend-distributed-metadata"
-version = "0.1.0"
-description = "Opt-in packed DP metadata synchronization for vLLM Ascend"
+version = "0.1.1"
+description = "Opt-in scalar DP2 metadata synchronization for vLLM Ascend"
 readme = "README.md"
 requires-python = ">=3.11"
 

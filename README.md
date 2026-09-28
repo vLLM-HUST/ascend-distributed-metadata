@@ -1,67 +1,55 @@
-# Ascend Distributed Metadata MOD
+# Ascend Distributed Metadata (ADM)
 
-An independent, opt-in `vllm.general_plugins` package for the reviewed
-`NPUModelRunner._sync_metadata_across_dp` implementation. For DP2, this
-candidate packs both ranks into one `int32` and uses an all-reduce. Larger DP
-groups use one `int32` per rank with all-gather. Both paths reconstruct the
-native token vector, maximum token count, and minimum runtime graph mode.
-The native collective uses a `2 x DP` `int32` tensor. This candidate is
-experimental; its service-level speedup is unconfirmed.
+ADM is an opt-in `vllm.general_plugins` package for distributed-parallel
+metadata synchronization in the pinned vLLM-HUST / Ascend-HUST stack. The
+promoted implementation packs both DP2 ranks into one `int32` all-reduce;
+larger DP groups use one packed `int32` per rank with all-gather. The output
+retains the native token vector, maximum token count, and minimum graph mode.
 
-## Scope and compatibility
+## Measured result
 
-- Reviewed Ascend source: `vllm-project/vllm-ascend` commit
-  `367b8e62da799870a7476ce34f5f7658589a8aad`, target AST fingerprint
-  `3e3cac40908b68c65c45c820efca81073c0a11bef5eab13b2f8cf9ce36e407f5`.
-- Candidate vLLM-HUST core source: `vLLM-HUST/vllm-hust` commit
-  `e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0`, a packaging-only
-  delta over the reviewed `vllm-project/vllm` commit
-  `bc150f50299199599673614f80d12a196f377655`.
-- The plugin refuses a different target function body. Host tests check
-  return values, fallback, and collective shape under simulated rank inputs.
-  Qwen3.5 TP4/DP2 serving results are recorded in `qualifications/`.
-- This MOD optimizes per-call token and graph-mode synchronization. It does
-  not implement generation/epoch-bound metadata recovery.
+On Qwen3.5-35B-A3B TP4/DP2, the promoted scalar candidate completed all
+32 requests in each candidate–published MOD–candidate run. Output throughput
+was **26.979 and 27.052 tok/s**, versus **26.906 tok/s** for the intervening
+published MOD run: **+0.27% and +0.54%**, mean **+0.41%**. Both observations
+meet the project's 0.05% positive-result threshold communicated on
+2026-09-28. The difference is small relative to prior run variation, so
+repeatable end-to-end acceleration is not established. Two separate local
+CPU/Gloo sync-call comparisons measured 26.8% and 32.4% less time than the
+previous MOD; those measurements do not include model execution or NPU
+communication. See [qualification records](qualifications/README.md).
 
-## Install and enable
+## Compatibility and activation
 
-Install this directory into the reviewed vLLM/Ascend environment. Select only
-this general plugin and set `ADM_PACKED_SYNC_ENABLE=1` in **every** worker
-process before starting vLLM. The default is disabled.
+- Reviewed Ascend source: `367b8e62da799870a7476ce34f5f7658589a8aad`.
+  The plugin checks the target method's AST fingerprint
+  `3e3cac40908b68c65c45c820efca81073c0a11bef5eab13b2f8cf9ce36e407f5`
+  and refuses a different implementation.
+- Reviewed vLLM-HUST core source: `e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0`.
+- Entry point: `vllm.general_plugins/adm_packed_sync`. The default is off;
+  `ADM_PACKED_SYNC_ENABLE=1` enables the hook in every worker process.
+- DP1 and rank-local skip paths remain native. DP2 token counts above 8191
+  or unsupported graph modes use a group-visible fallback to the native
+  collective. The native padding decision is preserved.
+- `.vllm-hust/optimization.json` is the dev-hub `adm` launch profile. Its
+  model qualification status remains pending because a numerical positive
+  observation is narrower than a stable deployment claim.
 
-The repository also provides `.vllm-hust/optimization.json` for the
-vLLM-HUST dev-hub's named `adm` optimization profile. The profile selects
-Ascend's installed platform/general plugins plus this plugin and configures
-TP4/DP2. Its Qwen3.5-35B-A3B qualification is pending; the manifest does not
-certify a performance gain.
+Use the profile with a qualified stack, or install this package in that stack
+and select `adm_packed_sync` in `VLLM_PLUGINS`. Keep the disabled variant as
+the control for any new performance comparison.
 
-```bash
-VLLM_PLUGINS=ascend,ascend_kv_connector,ascend_model,ascend_model_loader,ascend_service_profiling,adm_packed_sync \
-ADM_PACKED_SYNC_ENABLE=1 vllm serve /path/to/model
-```
+## Repository layout
 
-Run the identical baseline with `ADM_PACKED_SYNC_ENABLE=0`. The concrete
-serving command, model path, NPU allocation, source revisions and result
-directory must be frozen for each comparison.
+| Path | Purpose |
+| --- | --- |
+| `src/ascend_distributed_metadata/` | Version-gated runtime plugin |
+| `tests/` | Host correctness and fallback checks |
+| `benchmarks/` | Reusable local CPU/Gloo measurement scripts |
+| `qualifications/` | Promoted results, hashes, and scope limits |
+| `docs/experiments.md` | Experimental branches and unpromoted outcomes |
+| `.vllm-hust/` | Dev-hub optimization profile |
 
-The rank-local skip and DP1 paths remain native. For active DP2 collectives,
-all ranks call the same one-`int32` all-reduce, irrespective of local padding
-flags. DP2 token counts above 8191 or unsupported graph modes use a
-group-visible sentinel; all ranks then run the original collective. Larger
-DP groups retain the packed all-gather path and its original range checks.
-
-## Verification status
-
-The [Qwen3.5-35B-A3B qualification results](qualifications/README.md) include
-a TP4/DP1 model smoke test and four TP4/DP2 baseline/MOD serving runs, all
-with 32/32 completed requests on Ascend 910B2. The matched serving runs did
-not establish an end-to-end speedup. Two independent local CPU/Gloo DP2
-sync-call measurements found the MOD 25.4% and 29.5% faster than the native
-method. This is a narrower result than NPU communication or model throughput.
-
-The [scalar DP2 candidate](qualifications/qwen35-dp2-scalar-candidate-20260925.json)
-was 26.8% and 32.4% faster than the published MOD in two separate local
-CPU/Gloo sync-call measurements. A Qwen3.5 TP4/DP2 candidate-published-
-candidate serving sequence completed 32/32 requests in every run: candidate
-26.979 and 27.052 versus published MOD 26.906 output tokens/s. These 0.27%
-and 0.54% differences do not establish a service-level speedup.
+The generation-bound DP load-metadata replica and other exploratory changes
+remain on their own branches. This `main` package does not implement worker
+failure recovery. See [experimental work](docs/experiments.md).

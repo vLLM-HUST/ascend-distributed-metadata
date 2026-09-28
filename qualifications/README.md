@@ -1,83 +1,43 @@
-# Qualification results
+# Promoted qualification evidence
 
-## High-concurrency graph capacity — 2026-09-26
+## DP2 scalar MOD — positive numerical observation
 
-The [machine-readable comparison](qwen35-dp2-capacity-tuning-20260926.json)
-records four Qwen3.5-35B-A3B TP4/DP2 runs on eight Ascend 910B2 devices.
-Every run completed 128/128 synthetic requests without a reported request
-error. At concurrency 64, raising per-engine `--max-num-seqs` from 16 to 32
-and adding graph capture sizes 24 and 32 increased two-run mean output
-throughput from 312.39 to 446.81 tokens/s (+43.0%). Mean TTFT fell from
-11.67 to 2.26 s (−80.6%), while mean TPOT rose from 90.71 to 115.28 ms
-(+27.1%). The 16-sequence configuration was rerun after both 32-sequence
-runs and returned to its earlier throughput range.
+[Machine-readable record](qwen35-dp2-scalar-candidate-20260925.json):
+Qwen3.5-35B-A3B, TP4/DP2, eight Ascend 910B2 devices, 32-request
+`random-online-4chip` subset, eager mode. The candidate–published
+MOD–candidate sequence completed 32/32 requests in every run. Candidate
+output throughput was 26.979 and 27.052 tok/s; the intervening published MOD
+run was 26.906 tok/s. The two deltas were +0.27% and +0.54%, with a +0.41%
+mean. They exceed the project criterion of +0.05% for a positive measured
+result. These small differences do not establish a repeatable serving
+speedup beyond run variation.
 
-The same [experimental MOD branch](https://github.com/vLLM-HUST/ascend-distributed-metadata/tree/perf/graph-downgrade-unpad)
-was enabled in both configurations. This is a stack configuration gain for
-the measured workload, not an ADM source-code speedup. The branch records
-the separate graph-padding and MOD on/off checks. Generated text and raw
-logs remain local; result hashes and aggregate metrics are in the JSON.
+Two independent local CPU/Gloo comparisons of the same scalar candidate
+against the previous MOD measured 0.253 vs 0.185 ms and 0.310 vs 0.210 ms
+per metadata call (previous vs candidate). Correctness passed. The candidate
+was 26.8% and 32.4% faster in this limited call-level scope. The exact
+[candidate script](../benchmarks/dp2_scalar_candidate_cpu_gloo.py) and
+original-result hashes are in the JSON record. These figures exclude NPU
+communication and model execution.
 
-## Qwen3.5-35B-A3B model smoke test — 2026-09-25
+## Earlier packed MOD call result
 
-The [machine-readable result](qwen35-35b-a3b-tp4-dp1-smoke-20260925.json)
-records a 32-request subset of the benchmark repository's
-`random-online-4chip` scenario. It used synthetic 1024-token inputs and
-256-token outputs, seed 0, TP4/DP1, eager execution, and four Ascend 910B2
-devices. All 32 requests completed with no request errors. The measured
-duration was 353.80 s and output throughput was 23.15 tokens/s.
+[Extracted positive call-level record](dp2-packed-sync-cpu-gloo-20260925.json):
+two independent CPU/Gloo comparisons against the native method measured
+0.415 vs 0.310 ms and 0.424 vs 0.299 ms (native vs original packed MOD),
+or 25.4% and 29.5% less time. The [script](../benchmarks/dp_sync_cpu_gloo.py)
+is byte-identical after its move to `benchmarks/`. The full serving comparison,
+which did not favor that original MOD, remains on the
+[`feat/epoch-bound-replica` experiment branch](https://github.com/vLLM-HUST/ascend-distributed-metadata/blob/feat/epoch-bound-replica/qualifications/qwen35-35b-a3b-dp2-mod-comparison-20260925.json).
 
-The model and source revisions, benchmark scenario hash, aggregate metrics,
-and sanitized per-request lengths and latencies are in the JSON file. The
-original detailed result remains local; its SHA256 is recorded in the JSON.
-Generated text, host paths, and raw server logs are not published.
+## Model execution and baseline
 
-The plugin was enabled for this run, but DP1 takes the native metadata path.
-This result establishes model execution only. A MOD speedup requires a
-matched DP2 baseline, treatment, and recheck.
+The [TP4/DP1 smoke](qwen35-35b-a3b-tp4-dp1-smoke-20260925.json) completed
+32/32 requests at 23.15 output tok/s. DP1 uses the native metadata path.
+The [TP4/DP2 baseline](qwen35-35b-a3b-tp4-dp2-baseline-20260925.json)
+completed 32/32 requests at 27.16 output tok/s with the original MOD off.
+Neither single run is a speedup comparison. Both records contain source and
+workload revisions, sanitized metrics, and hashes of the retained raw data.
 
-## Qwen3.5-35B-A3B TP4/DP2 baseline — 2026-09-25
-
-The [baseline result](qwen35-35b-a3b-tp4-dp2-baseline-20260925.json) uses
-the same 32-request subset, model, seed, token lengths, and concurrency on
-eight Ascend 910B2 devices. The MOD was configured off. All 32 requests
-completed without errors. Duration was 301.59 s and output throughput was
-27.16 tokens/s. The original detailed result is retained locally and its
-SHA256 is recorded in the public JSON.
-
-This is the first DP2 baseline. A matched MOD run and independent recheck are
-still required before reporting a performance difference.
-
-## DP2 MOD comparison and sync-call microbenchmark — 2026-09-25
-
-The [comparison result](qwen35-35b-a3b-dp2-mod-comparison-20260925.json)
-records two baseline and two MOD full-model runs under the same 32-request
-TP4/DP2 workload. Each completed 32/32 requests without errors. Baseline
-output throughput was 27.16 and 26.76 tokens/s; MOD throughput was 26.82 and
-26.86 tokens/s. These runs do not establish an end-to-end speedup.
-
-Two independent local two-process CPU/Gloo measurements directly called the
-pinned Ascend sync method and the MOD wrapper. Median per-call times were
-0.415 vs 0.310 ms and 0.424 vs 0.299 ms, respectively (native vs MOD).
-The MOD was 25.4% and 29.5% faster in this limited sync-call measurement.
-Correctness was checked before timing. The result file includes all eight
-alternating timing blocks per run and SHA256 hashes of the original results.
-The exact [microbenchmark script](benchmark_dp_sync.py) is included here;
-its SHA256 matches the hashes recorded for both runs.
-This CPU/Gloo measurement does not measure NPU communication or Qwen serving.
-
-## DP2 scalar-sync candidate — 2026-09-25
-
-The [candidate record](qwen35-dp2-scalar-candidate-20260925.json) covers an
-experimental DP2 one-`int32` all-reduce. Two independent local CPU/Gloo
-comparisons against the published MOD passed correctness and measured median
-per-call times of 0.253 vs 0.185 ms and 0.310 vs 0.210 ms (published vs
-candidate). The candidate was 26.8% and 32.4% faster in this sync-call scope.
-The exact [candidate microbenchmark script](benchmark_dp2_scalar_candidate.py)
-and original-result SHA256 hashes are included.
-
-A Qwen3.5 TP4/DP2 candidate-published-candidate serving sequence completed
-32/32 requests in every run. Candidate output throughput was 26.979 and
-27.052 tokens/s versus 26.906 tokens/s for the intervening published MOD.
-The 0.27% and 0.54% differences are too small to establish a service-level
-gain against prior serving variation.
+Negative results and configuration-only gains are indexed in
+[experimental work](../docs/experiments.md).
