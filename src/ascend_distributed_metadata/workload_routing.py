@@ -14,6 +14,7 @@ from .packed_sync import _fingerprint
 ENABLE_ENV = "ADM_WORKLOAD_ROUTING_ENABLE"
 TARGET_FINGERPRINT = "fc983a9be252a00514f0d2a58342d9c67d1708efca8cf6b90b0433e2228c57f1"
 ORIGINAL_ATTR = "_adm_workload_routing_original"
+MAX_WORK_UNITS = 32.0
 
 
 class RoutingViolation(RuntimeError):
@@ -29,7 +30,7 @@ def _work_units(request: Any) -> float | None:
     if type(max_tokens) is not int or max_tokens < 1:
         return None
     # The cap prevents a single declared maximum from pinning a rank forever.
-    return min(16.0, len(tokens) / 512.0 + max_tokens / 128.0)
+    return min(MAX_WORK_UNITS, len(tokens) / 512.0 + max_tokens / 32.0)
 
 
 def _wrap(original: Callable[..., Any]) -> Callable[..., Any]:

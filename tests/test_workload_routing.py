@@ -45,6 +45,16 @@ def test_long_request_metadata_changes_next_tied_choice():
     assert client.native_calls == 0
 
 
+def test_long_decode_budget_keeps_short_requests_on_other_rank():
+    client = Client()
+    route = workload_routing._wrap(Client.native_route)
+
+    assert route(client, request("long", 128, 512)) == b"rank-0"
+    for index in range(5):
+        assert route(client, request(f"short-{index}", 128, 32)) == b"rank-1"
+    assert route(client, request("next", 128, 32)) == b"rank-0"
+
+
 def test_completed_request_is_pruned_before_the_next_choice():
     client = Client()
     route = workload_routing._wrap(Client.native_route)
