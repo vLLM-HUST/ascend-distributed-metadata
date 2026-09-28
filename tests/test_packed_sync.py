@@ -43,7 +43,7 @@ class FakeDist:
 
     def all_reduce(self, tensor, *, group):
         self.calls.append((tensor.clone(), tensor.numel(), group))
-        word = sum(value << (packed_sync.DP2_SLOT_BITS * rank)
+        word = sum(value << (packed_sync.WORD_SLOT_BITS * rank)
                    for rank, value in enumerate(self.values))
         tensor.fill_(word)
 
@@ -61,11 +61,12 @@ def module_for(values, *, skip=False):
 
 
 def test_packed_collective_reconstructs_sparse_vector_and_minimum_mode():
-    counts = [32, 48, 16, 40]
-    modes = [Mode.FULL, Mode.PIECEWISE, Mode.FULL, Mode.NONE]
+    counts = [32, 48, 16, 40, 24]
+    modes = [Mode.FULL, Mode.PIECEWISE, Mode.FULL, Mode.NONE, Mode.FULL]
     values = [packed_sync._encode(n, m) for n, m in zip(counts, modes)]
     module, dist = module_for(values)
     runner = Runner(rank=1)
+    runner.dp_size = 5
     wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
 
     maximum, vector, mode = wrapped(runner, 48, cudagraph_mode=Mode.PIECEWISE)
@@ -78,7 +79,7 @@ def test_packed_collective_reconstructs_sparse_vector_and_minimum_mode():
     assert len(dist.calls) == 1
     local, output_length, group = dist.calls[0]
     assert local.tolist() == [values[1]]
-    assert output_length == 4
+    assert output_length == 5
     assert group == "reviewed-cpu-group"
 
 
@@ -104,12 +105,31 @@ def test_dp2_scalar_collective_preserves_sparse_and_padded_results():
     assert [runner.native_calls for runner in runners] == [0, 0]
 
 
+def test_dp4_int64_word_preserves_rank_counts_and_minimum_graph_mode():
+    counts = [17, 8191, 0, 37]
+    modes = [Mode.FULL, Mode.FULL, Mode.PIECEWISE, Mode.NONE]
+    values = [packed_sync._encode(n, m) for n, m in zip(counts, modes)]
+    module, dist = module_for(values)
+    wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+    runners = [Runner(rank=i) for i in range(4)]
+
+    for rank, runner in enumerate(runners):
+        maximum, vector, mode = wrapped(runner, counts[rank],
+                                        cudagraph_mode=modes[rank])
+        assert (maximum, vector.tolist(), mode) == (8191, counts, Mode.NONE)
+        assert runner.native_calls == 0
+
+    assert len(dist.calls) == 4
+    assert all(call[0].dtype == torch.int64 and call[1] == 1 for call in dist.calls)
+    assert dist.calls[3][0].item() == values[3] << (3 * packed_sync.WORD_SLOT_BITS)
+
+
 @pytest.mark.parametrize("bad_rank", [0, 1])
 def test_dp2_out_of_range_rank_falls_back_on_both_ranks(bad_rank):
     counts = [7, 8]
-    counts[bad_rank] = packed_sync.DP2_MAX_TOKENS + 1
+    counts[bad_rank] = packed_sync.WORD_MAX_TOKENS + 1
     values = [packed_sync._encode(n, Mode.FULL) for n in counts]
-    values[bad_rank] = packed_sync.DP2_SENTINEL
+    values[bad_rank] = packed_sync.WORD_SENTINEL
     module, dist = module_for(values)
     wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
     runners = [Runner(rank=0), Runner(rank=1)]
@@ -122,6 +142,24 @@ def test_dp2_out_of_range_rank_falls_back_on_both_ranks(bad_rank):
     assert len(dist.calls) == 2
     assert [call[1] for call in dist.calls] == [1, 1]
     assert [runner.native_calls for runner in runners] == [1, 1]
+
+
+@pytest.mark.parametrize("bad_rank", [0, 3])
+def test_dp4_out_of_range_rank_falls_back_on_all_ranks(bad_rank):
+    counts = [7, 8, 9, 10]
+    counts[bad_rank] = packed_sync.WORD_MAX_TOKENS + 1
+    values = [packed_sync._encode(n, Mode.FULL) for n in counts]
+    values[bad_rank] = packed_sync.WORD_SENTINEL
+    module, dist = module_for(values)
+    wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+    runners = [Runner(rank=i) for i in range(4)]
+
+    for rank, runner in enumerate(runners):
+        wrapped(runner, counts[rank], cudagraph_mode=Mode.FULL)
+
+    assert len(dist.calls) == 4
+    assert all(call[0].dtype == torch.int64 and call[1] == 1 for call in dist.calls)
+    assert [runner.native_calls for runner in runners] == [1] * 4
 
 
 @pytest.mark.parametrize("draft,padding", [(False, True), (True, False)])
@@ -156,11 +194,11 @@ def test_rank_local_padding_choice_does_not_change_collective_shape():
 
     assert sparse.tolist() == [7, 12, 3, 9]
     assert padded.tolist() == [12, 12, 12, 12]
-    assert [call[1] for call in dist.calls] == [4, 4]
+    assert [call[1] for call in dist.calls] == [1, 1]
 
 
 def test_group_visible_sentinel_uses_native_collective_on_every_rank():
-    values = [packed_sync._encode(7, Mode.FULL), -1,
+    values = [packed_sync._encode(7, Mode.FULL), packed_sync.WORD_SENTINEL,
               packed_sync._encode(3, Mode.NONE),
               packed_sync._encode(9, Mode.PIECEWISE)]
     module, dist = module_for(values)

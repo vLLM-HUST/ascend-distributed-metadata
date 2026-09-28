@@ -1,8 +1,8 @@
 # Ascend Distributed Metadata
 
 An opt-in vLLM Ascend plugin for synchronizing data-parallel scheduling
-metadata. On DP2, it packs both ranks' token counts and graph modes into one
-`int32` all-reduce. Larger DP groups use one packed `int32` per rank with
+metadata. This experimental branch packs DP2 into one `int32` and DP4 into
+one `int64` all-reduce. Other DP groups use one packed `int32` per rank with
 all-gather. The plugin returns the same token vector, maximum token count,
 and minimum graph mode as the reviewed native method.
 
@@ -25,7 +25,7 @@ enable the optimization. Set `ADM_PACKED_SYNC_ENABLE=1` and include
 disabled. The [dev-hub profile](.vllm-hust/optimization.json) provides the
 named `adm` launch configuration.
 
-DP1 and rank-local skip paths use the native method. DP2 token counts above
+DP1 and rank-local skip paths use the native method. DP2/DP4 token counts above
 8191 or unsupported graph modes use a group-visible fallback to the native
 collective. The native padding decision is preserved.
 
