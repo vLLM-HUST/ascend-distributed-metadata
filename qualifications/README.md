@@ -1,6 +1,6 @@
-# Promoted qualification evidence
+# Qualification results
 
-## DP2 scalar MOD — positive numerical observation
+## DP2 scalar MOD
 
 [Machine-readable record](qwen35-dp2-scalar-candidate-20260925.json):
 Qwen3.5-35B-A3B, TP4/DP2, eight Ascend 910B2 devices, 32-request
@@ -8,9 +8,8 @@ Qwen3.5-35B-A3B, TP4/DP2, eight Ascend 910B2 devices, 32-request
 MOD–candidate sequence completed 32/32 requests in every run. Candidate
 output throughput was 26.979 and 27.052 tok/s; the intervening published MOD
 run was 26.906 tok/s. The two deltas were +0.27% and +0.54%, with a +0.41%
-mean. They exceed the project criterion of +0.05% for a positive measured
-result. These small differences do not establish a repeatable serving
-speedup beyond run variation.
+mean. The difference is small relative to run variation; repeatable serving
+speedup has not been established.
 
 Two independent local CPU/Gloo comparisons of the same scalar candidate
 against the previous MOD measured 0.253 vs 0.185 ms and 0.310 vs 0.210 ms
@@ -22,7 +21,7 @@ communication and model execution.
 
 ## Earlier packed MOD call result
 
-[Extracted positive call-level record](dp2-packed-sync-cpu-gloo-20260925.json):
+[CPU/Gloo call-level record](dp2-packed-sync-cpu-gloo-20260925.json):
 two independent CPU/Gloo comparisons against the native method measured
 0.415 vs 0.310 ms and 0.424 vs 0.299 ms (native vs original packed MOD),
 or 25.4% and 29.5% less time. The [script](../benchmarks/dp_sync_cpu_gloo.py)
