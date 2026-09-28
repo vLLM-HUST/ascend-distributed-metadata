@@ -36,12 +36,14 @@ class FakeDist:
     def __init__(self, values):
         self.values = values
         self.calls = []
+        self.tensor_ids = []
 
     def all_gather_into_tensor(self, output, local, *, group):
         self.calls.append((local.clone(), output.numel(), group))
         output.copy_(torch.tensor(self.values, dtype=torch.int32))
 
     def all_reduce(self, tensor, *, group):
+        self.tensor_ids.append(id(tensor))
         self.calls.append((tensor.clone(), tensor.numel(), group))
         word = sum(value << (packed_sync.WORD_SLOT_BITS * rank)
                    for rank, value in enumerate(self.values))
@@ -122,6 +124,32 @@ def test_dp4_int64_word_preserves_rank_counts_and_minimum_graph_mode():
     assert len(dist.calls) == 4
     assert all(call[0].dtype == torch.int64 and call[1] == 1 for call in dist.calls)
     assert dist.calls[3][0].item() == values[3] << (3 * packed_sync.WORD_SLOT_BITS)
+
+
+def test_dp4_word_reused_across_steps_and_reset_after_fallback():
+    module, dist = module_for([packed_sync._encode(n, Mode.FULL)
+                               for n in (3, 7, 11, 5)])
+    wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+    runner = Runner(rank=2)
+
+    first = wrapped(runner, 11, cudagraph_mode=Mode.FULL)
+    assert first[1].tolist() == [3, 7, 11, 5]
+    assert runner.native_calls == 0
+
+    dist.values = [packed_sync._encode(n, Mode.NONE)
+                   for n in (13, 2, 4, 9)]
+    second = wrapped(runner, 4, cudagraph_mode=Mode.NONE)
+    assert second[1].tolist() == [13, 2, 4, 9]
+    assert dist.tensor_ids[0] == dist.tensor_ids[1]
+    assert dist.calls[0][0].item() == packed_sync._encode(11, Mode.FULL) << 30
+    assert dist.calls[1][0].item() == packed_sync._encode(4, Mode.NONE) << 30
+
+    dist.values[0] = packed_sync.WORD_SENTINEL
+    wrapped(runner, 4, cudagraph_mode=Mode.NONE)
+    assert runner.native_calls == 1
+    dist.values[0] = packed_sync._encode(13, Mode.NONE)
+    assert wrapped(runner, 4, cudagraph_mode=Mode.NONE)[1].tolist() == [13, 2, 4, 9]
+    assert len(set(dist.tensor_ids)) == 1
 
 
 @pytest.mark.parametrize("bad_rank", [0, 1])

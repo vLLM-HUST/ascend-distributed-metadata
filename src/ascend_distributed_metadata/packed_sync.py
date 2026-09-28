@@ -13,6 +13,7 @@ import importlib
 import inspect
 import os
 import textwrap
+from array import array
 from collections.abc import Callable
 from typing import Any
 
@@ -30,6 +31,7 @@ WORD_SLOT_MASK = (1 << WORD_SLOT_BITS) - 1
 WORD_MAX_TOKENS = WORD_SLOT_MASK >> 2
 WORD_MAX_VALUE = (WORD_MAX_TOKENS << 2) | 2
 WORD_SENTINEL = 3
+INT64_ARRAY_COMPAT = array("q").itemsize == 8
 
 
 class PackedSyncViolation(RuntimeError):
@@ -89,10 +91,24 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
                 print(f"adm_dp4_word_active=rank:{self.dp_rank},dtype:int64", flush=True)
                 report_dp4 = False
             slot = encoded if 0 <= encoded <= WORD_MAX_VALUE else WORD_SENTINEL
-            packed = torch.tensor(
-                [slot << (WORD_SLOT_BITS * self.dp_rank)],
-                device="cpu", dtype=torch.int32 if self.dp_size == 2 else torch.int64,
-            )
+            local_word = slot << (WORD_SLOT_BITS * self.dp_rank)
+            if self.dp_size == 4:
+                packed = getattr(self, "_adm_dp4_word", None)
+                if packed is None:
+                    if INT64_ARRAY_COMPAT:
+                        word_buffer = array("q", [0])
+                        packed = torch.frombuffer(word_buffer, dtype=torch.int64)
+                        self._adm_dp4_word_buffer = word_buffer
+                    else:
+                        packed = torch.empty(1, device="cpu", dtype=torch.int64)
+                    self._adm_dp4_word = packed
+                # The CPU collective completes before this rank's next step.
+                if INT64_ARRAY_COMPAT:
+                    self._adm_dp4_word_buffer[0] = local_word
+                else:
+                    packed.fill_(local_word)
+            else:
+                packed = torch.tensor([local_word], device="cpu", dtype=torch.int32)
             dist.all_reduce(packed, group=get_dp_group().cpu_group)
             word = int(packed.item())
             values = [
