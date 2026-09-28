@@ -1,10 +1,10 @@
 # Ascend Distributed Metadata
 
 An opt-in vLLM Ascend plugin for synchronizing data-parallel scheduling
-metadata. This experimental branch packs DP2 into one `int32` and DP4 into
-one `int64` all-reduce. Other DP groups use one packed `int32` per rank with
-all-gather. The plugin returns the same token vector, maximum token count,
-and minimum graph mode as the reviewed native method.
+metadata. DP2 uses one `int32` and DP4 uses one `int64` all-reduce. Other DP
+groups use one packed `int32` per rank with all-gather. The plugin returns the
+same token vector, maximum token count, and minimum graph mode as the reviewed
+native method.
 
 ## Requirements
 
@@ -30,6 +30,15 @@ DP1 and rank-local skip paths use the native method. DP2/DP4 token counts above
 collective. The native padding decision is preserved.
 
 ## Results
+
+The [Qwen3-30B-A3B-W8A8 DP4 comparison](qualifications/qwen3moe-dp4-int64-word-20260928.json)
+used the same 64-request trace for six TP1/DP4 service sessions, with two
+rounds per session. All 12 rounds completed 64/64 requests. The three matched
+session means favored the DP4 word path by 0.38%, 0.71%, and 1.32%; overall
+mean output throughput was 467.099 vs 463.376 tok/s (+0.80%). Two local
+CPU/Gloo method-call runs measured 30.5% and 36.2% less time. The service
+difference is small and individual rounds varied; the call-level result has
+a narrower scope than full-model serving.
 
 The [Qwen3.5-35B-A3B TP4/DP2 comparison](qualifications/README.md) completed
 32/32 requests in each of three runs. The candidate measured 26.979 and

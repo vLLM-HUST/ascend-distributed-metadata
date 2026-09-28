@@ -1,5 +1,23 @@
 # Qualification results
 
+## DP4 word MOD
+
+The [machine-readable record](qwen3moe-dp4-int64-word-20260928.json) covers
+Qwen3-30B-A3B-W8A8 with TP1/DP4, four Ascend 910B2 devices, a frozen
+64-request trace, and `FULL_DECODE_ONLY` graphs. Six service sessions ran in
+published–candidate–published–candidate–candidate–published order, with two
+rounds each. Every round completed 64/64 requests. The paired session-mean
+throughput differences were +0.38%, +0.71%, and +1.32%. Overall means were
+463.376 tok/s published and 467.099 tok/s candidate. The first round of each
+of the first two candidate sessions was slower than its preceding published
+session, so these results do not imply a per-round gain.
+
+Two independent CPU/Gloo direct-method comparisons passed correctness checks
+and measured 0.559 vs 0.356 ms and 0.526 vs 0.366 ms per call (published vs
+candidate). These exclude NPU communication and model execution. The record
+includes raw result hashes, code and workload pins, and activation evidence
+for all four DP ranks.
+
 ## DP2 scalar MOD
 
 [Machine-readable record](qwen35-dp2-scalar-candidate-20260925.json):
