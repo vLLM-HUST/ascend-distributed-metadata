@@ -68,6 +68,7 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
     should_skip = runner_module.should_skip_allreduce_across_dp_group
     graph_mode_type = runner_module.CUDAGraphMode
     default_mode = inspect.signature(original).parameters["cudagraph_mode"].default
+    report_dp4 = os.environ.get("ADM_DP4_REPORT_ACTIVE") == "1"
 
     def packed_sync(
         self: Any,
@@ -76,6 +77,7 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
         cudagraph_mode: Any = default_mode,
         allow_dp_padding: bool = False,
     ) -> tuple[int, Any, Any]:
+        nonlocal report_dp4
         if self.dp_size == 1 or should_skip(self.vllm_config, is_draft_model):
             return original(
                 self, num_tokens, is_draft_model, cudagraph_mode, allow_dp_padding
@@ -83,6 +85,9 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
 
         encoded = _encode(num_tokens, cudagraph_mode)
         if self.dp_size in (2, 4):
+            if self.dp_size == 4 and report_dp4:
+                print(f"adm_dp4_word_active=rank:{self.dp_rank},dtype:int64", flush=True)
+                report_dp4 = False
             slot = encoded if 0 <= encoded <= WORD_MAX_VALUE else WORD_SENTINEL
             packed = torch.tensor(
                 [slot << (WORD_SLOT_BITS * self.dp_rank)],
