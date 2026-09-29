@@ -13,6 +13,7 @@ from uuid import uuid4
 
 SCHEMA = 1
 MAX_RECENT_RECEIPTS = 64
+REPLAY_REQUEST_TAG = "ADM_METADATA_REPLAY"
 
 
 class ReplicaViolation(ValueError):
@@ -125,6 +126,7 @@ class FrontendReplica:
         self.counts_update = False
         self._digest: str | None = None
         self._invalidated: tuple[str, str, str | None] | None = None
+        self._replay_requested = False
         self._pending_receipt: dict | None = None
         self.recovery_receipts: list[dict] = []
         self.recovery_count = 0
@@ -138,6 +140,16 @@ class FrontendReplica:
         if self._invalidated is not None or self._pending_receipt is not None:
             raise ReplicaViolation("recovery_already_pending")
         self._invalidated = (recovery_id, reason, self.generation)
+        self._replay_requested = False
+
+    def take_replay_request(self) -> tuple[str, str, str | None, int] | None:
+        """Return one replay request for the current invalidation."""
+        if self._invalidated is None or self._replay_requested:
+            return None
+        self._replay_requested = True
+        recovery_id, _, _ = self._invalidated
+        return (REPLAY_REQUEST_TAG, recovery_id, self.generation,
+                self.publication_seq)
 
     @property
     def ready(self) -> bool:

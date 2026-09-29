@@ -188,6 +188,29 @@ def test_recovery_cannot_claim_an_unobserved_rank():
     assert replica.apply(publisher.publish(0, True))
 
 
+def test_replay_request_is_bounded_to_one_per_invalidation():
+    publisher = CoordinatorPublisher(2, "coordinator-A")
+    publisher.observe(0, 0, 1, 1, 0)
+    publisher.observe(1, 0, 1, 0, 1)
+    replica = FrontendReplica(2)
+    assert replica.take_replay_request() is None
+    assert replica.apply(publisher.publish(0, True))
+
+    replica.invalidate("loss-1", "local_replica_lost")
+    assert replica.take_replay_request() == (
+        "ADM_METADATA_REPLAY", "loss-1", "coordinator-A", 0
+    )
+    assert replica.take_replay_request() is None
+    assert replica.apply(publisher.publish(0, True))
+    assert replica.take_replay_request() is None
+    replica.counts_for_route()
+
+    replica.invalidate("loss-2", "local_replica_lost")
+    assert replica.take_replay_request() == (
+        "ADM_METADATA_REPLAY", "loss-2", "coordinator-A", 1
+    )
+
+
 def test_gated_local_loss_emits_receipt_only_after_routing_read(capsys):
     publisher = CoordinatorPublisher(2, "coordinator-A")
     publisher.observe(0, 0, 1, 1, 0)
