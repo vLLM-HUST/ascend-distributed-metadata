@@ -18,6 +18,10 @@ which descends from the core revision above. The hooks are absent from the
 base core revision. The combined package passed a BF16 TP2/DP2 service and
 local-replica-loss smoke on this hook carrier; see the
 [qualification recheck](qualifications/qwen35-bf16-combined-replica-r2-20260929.json).
+Requested snapshot replay additionally requires the separate core revision
+`259fa03f7f30a8b02c82c9ddf357bea5c66db2d9`; the
+[BF16 replay smoke](qualifications/qwen35-bf16-requested-replay-20260929.json)
+validated the paired revisions.
 
 The plugin checks the target Ascend method's AST fingerprint at startup and
 refuses to wrap a different implementation. It does not install vLLM,
@@ -63,6 +67,10 @@ prevents that routing read; leaving this variable unset keeps the in-memory
 diagnostic behavior. The process retains at most 64 recent receipts in memory.
 The [BF16 service check](qualifications/qwen35-bf16-durable-receipt-20260929.json)
 verified the file content and `0600` permissions after an injected loss.
+On the replay-enabled core, each explicit invalidation sends at most one
+bounded request for a fresh full snapshot. The coordinator rate-limits
+replies. A successful request can avoid waiting for the next periodic
+publication; it does not detect faults by itself.
 
 ## Results
 

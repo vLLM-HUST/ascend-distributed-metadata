@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "evidence_type": "BF16 DP2 requested metadata snapshot replay after injected local replica loss",
+  "status": "passed",
+  "run_root": "/workspace/kmx/results/adm/qwen35-tp2-dp2-replay-20260929-ZqqpWD",
+  "source": {
+    "plugin_revision": "1431081fb75461a64fe592695c84c8baa981cc0e",
+    "core_revision": "259fa03f7f30a8b02c82c9ddf357bea5c66db2d9",
+    "ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "plugin_dirty": false,
+    "core_dirty": false,
+    "ascend_dirty": false,
+    "plugin_wheel_sha256": "67152f8ae8c0e4784947e820e2266f31f1eaab0abffcc9c78e8695742c8d5ffb",
+    "replica_source_sha256": "9d8a55dd99f4f055a87b5cc123895a3635055417c083b218b255161b8726280d",
+    "core_hook_sha256": "1337a466bb86851dfdb7b1f36d9d0c57504a18c4ae70fca4a606de9315e49540",
+    "runner_sha256": "b4bb7d98d180bf0c833bbec1a03be0612ad1e989fdf5c3735a0c19d4ea0cf02e"
+  },
+  "workload": {
+    "model": "Qwen3.5-35B-A3B",
+    "dtype": "bfloat16",
+    "quantization": null,
+    "model_index_sha256": "d8d0b7ca4e61ae107e3e87a3ff21136b3ac7c789e64bb24267227ca804e04205",
+    "devices": [0, 1, 2, 3],
+    "tensor_parallel_size": 2,
+    "data_parallel_size": 2,
+    "graph_mode": "FULL_DECODE_ONLY",
+    "packed_sync_enabled": true,
+    "epoch_replica_enabled": true,
+    "fault_injection": "local API replica invalidated at publication sequence >=1"
+  },
+  "result": {
+    "plugin_host_tests": "37 passed",
+    "core_protocol_tests_direct": "2 passed",
+    "core_pytest": "not run: existing environment lacks tblib required by tests/conftest.py",
+    "health": "passed",
+    "completion_request": "passed",
+    "fault_injected_at_publication_seq": 6,
+    "coordinator_replay_publication_seq": 7,
+    "recovery_consumed_at_publication_seq": 7,
+    "recovery_id": "injected-1",
+    "rank_frontiers": [[0, 0, 0, 1], [1, 0, 0, 1]],
+    "durable_receipt_file_count": 1,
+    "durable_receipt_file_mode": "0600",
+    "durable_receipt_file_sha256": "7c3d888f07cfad4fffcfdf96aab4088087b234e2034a71b6f1bb53f8f1e0ec31",
+    "receipt_summary_sha256": "ef5c2791ee869735d38e38cc0611765b7d3998c62b713778c309eb201ec7cfd3",
+    "server_log_sha256": "6b00dd34d478e091b11e4c63fb0b8c26a8eebcebca7836f21335e00e3810eea7",
+    "server_exit": 0,
+    "devices_free_after": true
+  },
+  "limits": "Only an explicitly injected local API replica loss was tested. Publication-sequence gaps are normal under receive-side coalescing and are not an automatic loss trigger. This smoke does not establish latency or throughput improvement, worker restart recovery, or a worker/topology epoch."
+}

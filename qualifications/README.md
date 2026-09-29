@@ -2,6 +2,12 @@
 
 ## Combined DP2 plugin and load-metadata replica
 
+The [requested-replay smoke](qwen35-bf16-requested-replay-20260929.json)
+used the paired plugin and core branches. The coordinator published sequence
+7 in response to the injected recovery ID, and the API's durable receipt
+consumed that same sequence. This verifies the control-message path under a
+BF16 TP2/DP2 service. It does not measure a performance gain.
+
 The [durable-receipt smoke](qwen35-bf16-durable-receipt-20260929.json)
 repeated the BF16 TP2/DP2 combined service with an existing receipt directory.
 After the injected local API replica loss, routing consumed the recovered

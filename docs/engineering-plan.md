@@ -16,9 +16,11 @@ carrier. Evidence for one path does not qualify the other.
 
 ## Stage 2: make recovery operational
 
-- Define a real invalidation trigger and a bounded replay request through
-  the coordinator transport. Today invalidation is only an explicit API call
-  or gated diagnostic fault; a subscriber gap is not yet detected.
+- A bounded replay request through the coordinator transport passed a BF16
+  injected-loss smoke on the paired core branch. A real invalidation trigger
+  remains open: today invalidation is an explicit API call or gated diagnostic
+  fault. A subscriber gap is not yet detected and cannot be inferred from a
+  publication-sequence jump because the receiver coalesces updates.
 - Bind each rank frontier to a worker lifetime or topology epoch. The current
   `current_wave` and `step_counter` fields do not establish that lifetime.
 - The optional durable receipt sink passed a fresh BF16 service check with

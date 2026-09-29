@@ -89,3 +89,18 @@ two-rank publication with sequence at least `N`. It drops that one publication,
 then waits for a later complete snapshot. The gated diagnostic prints the
 injection sequence and the recovery receipt after a real routing read. This
 simulates local-copy loss; it is not a worker crash or a transport failure.
+
+## Requested replay extension
+
+On core revision `259fa03f7f30a8b02c82c9ddf357bea5c66db2d9`, an
+invalidated API replica sends one `ADM_METADATA_REPLAY` control message over
+the existing frontend/coordinator channel. The coordinator validates the
+bounded request and publishes a complete snapshot immediately, with at most
+one replay publication per 100 ms. The normal periodic publication remains a
+fallback if the request is lost or rate-limited. Core versions without this
+extension continue to use the periodic path.
+
+The [BF16 smoke](../qualifications/qwen35-bf16-requested-replay-20260929.json)
+matched the coordinator's requested replay sequence to the API's consumed
+recovery receipt. This is a causal replay check for an injected local loss;
+it is not a measured latency gain or an automatic failure detector.
