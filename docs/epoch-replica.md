@@ -46,8 +46,12 @@ generations remain retired. After local replica invalidation, the next valid
 complete snapshot can restore readiness. A recovery receipt is created only
 when a subsequent routing read uses the restored state. The receipt binds the
 recovery ID, generations, publication sequence, rank frontiers, and snapshot
-hash. The gated diagnostic logs the local invalidation and receipt; a durable
-receipt sink is not yet implemented.
+hash. The gated diagnostic logs the local invalidation and receipt. An
+optional `ADM_RECOVERY_RECEIPT_DIR` stores each consumed receipt in a
+content-addressed JSON file. The directory must exist at startup. A disk
+error leaves the receipt pending and prevents that routing read; only the
+latest 64 receipts are retained in process memory. This sink records local
+API replica recovery, not worker restart or cross-process consensus.
 
 This generation identifies a **coordinator publication session**; it is not
 a worker process/topology epoch. `current_wave` identifies the existing DP

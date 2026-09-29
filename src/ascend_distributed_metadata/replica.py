@@ -7,10 +7,12 @@ after the accepted state is used by routing.
 
 from dataclasses import dataclass
 from hashlib import sha256
+from collections.abc import Callable
 import json
 from uuid import uuid4
 
 SCHEMA = 1
+MAX_RECENT_RECEIPTS = 64
 
 
 class ReplicaViolation(ValueError):
@@ -111,8 +113,10 @@ class CoordinatorPublisher:
 class FrontendReplica:
     """Validate full snapshots before their counts reach the router."""
 
-    def __init__(self, rank_count: int):
+    def __init__(self, rank_count: int,
+                 receipt_sink: Callable[[dict], None] | None = None):
         self.rank_count = _number(rank_count, 1)
+        self.receipt_sink = receipt_sink
         self.generation: str | None = None
         self.publication_seq = -1
         self.ranks: tuple[RankSnapshot, ...] = ()
@@ -123,6 +127,7 @@ class FrontendReplica:
         self._invalidated: tuple[str, str, str | None] | None = None
         self._pending_receipt: dict | None = None
         self.recovery_receipts: list[dict] = []
+        self.recovery_count = 0
         self.retired_generations: set[str] = set()
         self.rejected = {"stale_publication": 0, "stale_rank": 0, "stale_wave": 0,
                          "retired_generation": 0, "unobserved_rank": 0}
@@ -229,6 +234,11 @@ class FrontendReplica:
     def counts_for_route(self) -> list[list[int]]:
         counts = self.snapshot_counts()
         if self._pending_receipt is not None:
+            if self.receipt_sink is not None:
+                self.receipt_sink(self._pending_receipt)
             self.recovery_receipts.append(self._pending_receipt)
+            if len(self.recovery_receipts) > MAX_RECENT_RECEIPTS:
+                self.recovery_receipts.pop(0)
+            self.recovery_count += 1
             self._pending_receipt = None
         return counts

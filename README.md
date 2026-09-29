@@ -56,6 +56,12 @@ The existing [design and limitations](docs/epoch-replica.md) describe its
 current boundary. The combined smoke does not establish an automatic loss
 detector, worker-crash recovery, or a performance gain.
 
+Set `ADM_RECOVERY_RECEIPT_DIR` to an existing writable directory to retain
+one JSON file per consumed recovery receipt. File creation and directory
+metadata are synced before the receipt is acknowledged. A write failure
+prevents that routing read; leaving this variable unset keeps the in-memory
+diagnostic behavior. The process retains at most 64 recent receipts in memory.
+
 ## Results
 
 The [Qwen3-30B-A3B-W8A8 DP4 comparison](qualifications/qwen3moe-dp4-int64-word-20260928.json)

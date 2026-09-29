@@ -21,8 +21,9 @@ carrier. Evidence for one path does not qualify the other.
   or gated diagnostic fault; a subscriber gap is not yet detected.
 - Bind each rank frontier to a worker lifetime or topology epoch. The current
   `current_wave` and `step_counter` fields do not establish that lifetime.
-- Make acceptance, fallback, and recovery observable with counters and a
-  durable receipt sink. A stdout receipt is diagnostic evidence only.
+- The optional durable receipt sink is implemented; test it in a fresh BF16
+  service with injection and verify its on-disk content and permissions.
+  Acceptance/fallback counters and a service metrics export remain open.
 
 ## Stage 3: measure value
 
