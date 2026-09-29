@@ -83,6 +83,21 @@ def test_stale_rank_update_never_overwrites_newer_counts():
     assert replica.counts_for_route() == [[3, 0], [0, 1]]
 
 
+def test_same_rank_identity_cannot_be_relabelled_with_a_higher_version():
+    publisher = CoordinatorPublisher(2, "coordinator-A")
+    publisher.observe(0, 0, 1, 3, 0)
+    publisher.observe(1, 0, 1, 0, 1)
+    replica = FrontendReplica(2)
+    assert replica.apply(publisher.publish(0, True))
+
+    forged = publisher.publish(0, True)
+    forged["ranks"][0][3] += 1
+    forged["ranks"][0][4] = 99
+    with pytest.raises(ReplicaViolation, match="same_identity_different_payload"):
+        replica.apply(forged)
+    assert replica.counts_for_route() == [[3, 0], [0, 1]]
+
+
 def test_recovery_requires_complete_snapshot_and_actual_consumer_use():
     publisher = CoordinatorPublisher(2, "coordinator-A")
     publisher.observe(0, 0, 1, 1, 0)

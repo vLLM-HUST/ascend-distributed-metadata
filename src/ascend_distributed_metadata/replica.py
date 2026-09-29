@@ -188,7 +188,10 @@ class FrontendReplica:
                 ) or new.version < old.version:
                     self.rejected["stale_rank"] += 1
                     return False
-                if new.version == old.version and new != old:
+                if new != old and (
+                    (new.epoch, new.step) == (old.epoch, old.step)
+                    or new.version == old.version
+                ):
                     raise ReplicaViolation("same_identity_different_payload")
         if changed_generation:
             assert self.generation is not None
