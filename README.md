@@ -15,9 +15,9 @@ native method.
 The optional load-metadata replica also needs the opt-in core hooks on
 `vLLM-HUST/vllm-hust` `dbe6cc64d691f1a768d5409e0d4b5a8f55f5f4f7`,
 which descends from the core revision above. The hooks are absent from the
-base core revision. This combined package has host validation only so far;
-the previous replica experiment's NPU result does not qualify this combined
-branch.
+base core revision. The combined package passed a BF16 TP2/DP2 service and
+local-replica-loss smoke on this hook carrier; see the
+[qualification record](qualifications/qwen35-bf16-combined-replica-20260929.json).
 
 The plugin checks the target Ascend method's AST fingerprint at startup and
 refuses to wrap a different implementation. It does not install vLLM,
@@ -53,7 +53,8 @@ hook factory is activated only when the switch is `1`.
 This experimental generation identifies a coordinator publication session;
 it is not a worker process/topology epoch or a worker-crash recovery protocol.
 The existing [design and limitations](docs/epoch-replica.md) describe its
-current boundary. Runtime qualification for the combined package is pending.
+current boundary. The combined smoke does not establish an automatic loss
+detector, worker-crash recovery, or a performance gain.
 
 ## Results
 
@@ -85,6 +86,7 @@ The JSON records include the source revisions, result hashes, and workload.
 | `.vllm-hust/` | Dev-hub launch profile |
 | `docs/experiments.md` | Work in progress on experiment branches |
 | `docs/epoch-replica.md` | Experimental replica protocol and limits |
+| `docs/engineering-plan.md` | Upgrade gates and open capabilities |
 
 The [experiment branches](docs/experiments.md) contain metadata-replica
 recovery, alternative synchronization implementations, and their test records.

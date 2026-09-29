@@ -5,7 +5,7 @@ Development beyond the `main` plugin continues on separate branches:
 | Branch | Work in progress |
 | --- | --- |
 | [`feat/epoch-bound-replica`](https://github.com/vLLM-HUST/ascend-distributed-metadata/tree/feat/epoch-bound-replica) | Per-rank metadata snapshots and local API replica recovery. Runtime use also needs the [vLLM-HUST hook branch](https://github.com/vLLM-HUST/vllm-hust/tree/feature/ascend-distributed-metadata). |
-| `feat/adm-replica-integration-20260929` | Integrates that opt-in replica with the published DP2/DP4 word plugin; combined runtime qualification pending. |
+| `feat/adm-replica-integration-20260929` | Integrates that opt-in replica with the published DP2/DP4 word plugin; BF16 TP2/DP2 combined smoke passed. |
 | [`perf/native-padding-array-word`](https://github.com/vLLM-HUST/ascend-distributed-metadata/tree/perf/native-padding-array-word) | Cached DP2 metadata word and native padding behavior. |
 | [`perf/graph-downgrade-unpad`](https://github.com/vLLM-HUST/ascend-distributed-metadata/tree/perf/graph-downgrade-unpad) | Graph-mode padding and capacity experiments. |
 | [`perf/frombuffer-token-vector`](https://github.com/vLLM-HUST/ascend-distributed-metadata/tree/perf/frombuffer-token-vector) | Array-backed token-vector construction. |

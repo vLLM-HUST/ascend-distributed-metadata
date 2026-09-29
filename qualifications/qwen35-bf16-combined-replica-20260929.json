@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "evidence_type": "combined plugin BF16 serving and injected local-replica recovery smoke",
+  "status": "passed",
+  "run_root": "/workspace/kmx/results/adm/qwen35-tp2-dp2-combined-20260929-qorK1y",
+  "source": {
+    "plugin_revision": "20bce081abce6c62a093ad3a7b4ec149a6624796",
+    "core_revision": "dbe6cc64d691f1a768d5409e0d4b5a8f55f5f4f7",
+    "ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5",
+    "plugin_dirty": false,
+    "core_dirty": false,
+    "ascend_dirty": false,
+    "replica_source_sha256": "58e2acfda03d99339b044b66f9714a4b47c8f9d4752b81620e790645cb006aec",
+    "packed_sync_source_sha256": "daa17b4d246653e6f98a99c3141fd84df556c60af4ca38fea5588085be33a7c0",
+    "wheel_sha256": "d9d5aaa341c2b84136d52812efb96cf4a1f889556ec13546e4194f9048a7902c",
+    "runner_sha256": "054ccb0a59992f828fe421423cd04b5e2accbc159a6af9e97d170198a20a680f"
+  },
+  "workload": {
+    "model": "Qwen3.5-35B-A3B",
+    "model_index_sha256": "d8d0b7ca4e61ae107e3e87a3ff21136b3ac7c789e64bb24267227ca804e04205",
+    "dtype": "bfloat16",
+    "quantization": null,
+    "devices": [0, 1, 2, 3],
+    "tensor_parallel_size": 2,
+    "data_parallel_size": 2,
+    "graph_mode": "FULL_DECODE_ONLY",
+    "max_model_len": 2048,
+    "prefix_caching": false,
+    "packed_sync_enabled": true,
+    "epoch_replica_enabled": true,
+    "fault_injection": "local frontend replica invalidated at publication sequence >=1"
+  },
+  "result": {
+    "combined_host_activation": "passed: packed-sync wrapper and both replica factories installed in one fresh process",
+    "health": "passed",
+    "completion_request": "passed",
+    "replica_plugin_discovery": "passed",
+    "fault_injected_at_publication_seq": 7,
+    "recovery_consumed_at_publication_seq": 8,
+    "recovery_id": "injected-1",
+    "rank_frontiers": [[0, 0, 1, 2], [1, 0, 0, 1]],
+    "recovery_receipt_sha256": "e6c9221b09b45b1d3d64d7215dc06805ff65d8c7434a27e2c8b51f1b084ecb66",
+    "server_log_sha256": "833fb0e4b2623f7aed4c7df4cb52293aa025b212e5a0f07753b80a7a6c43c58a",
+    "server_exit": 0,
+    "devices_free_after": true
+  },
+  "limits": "Only an injected loss of the API process's local replica was tested; no worker restart, automatic failure detection, throughput comparison, or full benchmark was run."
+}

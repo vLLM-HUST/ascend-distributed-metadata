@@ -3,8 +3,11 @@
 Status: the prior `feat/epoch-bound-replica` branch implemented and host-tested
 this state machine with isolated vLLM-HUST hooks. Its TP1/DP2 NPU serving and
 gated local replica-loss recovery check passed; two matched serving rounds did
-not establish a throughput gain. The combined package on this branch has not
-yet received an NPU runtime qualification.
+not establish a throughput gain. The combined package on this branch passed
+a BF16 TP2/DP2 service and injected local-loss
+[smoke](../qualifications/qwen35-bf16-combined-replica-20260929.json). This
+does not qualify automatic loss detection, worker-process recovery, or a
+serving-speed claim.
 
 ## Real object and path
 
