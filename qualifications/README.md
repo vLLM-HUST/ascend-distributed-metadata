@@ -1,5 +1,19 @@
 # Qualification results
 
+## Experimental BF16 output-skew routing — 2026-09-28
+
+The [machine-readable record](qwen35-bf16-routing-output-skew-20260928.json)
+compares routing disabled against decode-budget-weighted routing on
+Qwen3.5-35B-A3B BF16, TP2/DP2, four Ascend 910B2 devices. The same 64
+dataset-backed requests were deliberately reordered to create a 33.1%
+alternating-rank output-budget imbalance. Two baseline–candidate session
+pairs, two rounds each, completed all requests. The paired session-mean
+output-throughput changes were +2.09% and +2.01%; aggregate means were
+337.389 and 344.310 tokens/s. This is a constructed-stress result; the
+unreordered trace did not establish a gain. The feature stays on this
+experimental branch, and the record includes source pins and raw-result
+hashes without publishing prompts or server logs.
+
 ## Trace-driven DP2 metadata candidate — 2026-09-27
 
 The [machine-readable record](adm-dp2-trace-native-padding-20260927.json)

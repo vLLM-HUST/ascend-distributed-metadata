@@ -1,0 +1,212 @@
+{
+  "schema_version": 1,
+  "date_utc": "2026-09-28",
+  "status": "qualified_for_constructed_output_skew_only",
+  "scope": "BF16 Qwen3.5-35B-A3B MoE, internal DP routing, TP2/DP2 on four Ascend 910B2 devices",
+  "claim": "Decode-budget-weighted experimental ADM routing improved output throughput in two matched pairs on an explicitly reordered, rank-skewed trace. This does not establish a general-workload gain or a native-sync speedup.",
+  "workload": {
+    "kind": "constructed stress trace from same 64 Qwen3.5-tokenized requests, reordered into alternating long/short output budgets",
+    "sha256": "c1fae74b7bcb608c128eaaddc7689da5c0c37040c2c30c9b99a6767b1b500f06",
+    "source_workload_sha256": "9bbd95dad96bc52eeb2b18d4f51d41ed504b606c44d1ba5f97e0a1dd7d92c6ba",
+    "construction_script_sha256": "71f1326799d7fb3cf081bb8d13db41554cd305e05985294657b3b09f8af7884d",
+    "alternating_output_budget_skew": 0.331088420595264
+  },
+  "model": {
+    "name": "Qwen3.5-35B-A3B",
+    "model_type": "qwen3_5_moe",
+    "dtype": "bfloat16",
+    "config_sha256": "5e4d7f74fec2f360eb9cfbfcd6ec0c4c76e684d3a11caaed259d9fd9bfbc7944",
+    "weight_index_sha256": "d8d0b7ca4e61ae107e3e87a3ff21136b3ac7c789e64bb24267227ca804e04205"
+  },
+  "runtime": {
+    "core_revision": "e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0",
+    "ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "benchmark_revision": "e8a68923768adffb85c2d0fa255b2cec79af8ab5",
+    "base_plugin_revision": "7b1be478eff0299d9c499b30d25bc77999407b3c",
+    "weighted_plugin_revision": "f93af706553dd99da90af0ec91c681693ea343a7",
+    "base_routing_enabled": false,
+    "weighted_routing_enabled": true,
+    "packed_sync_source_sha256": "6fdd6bc1f43070494d887d0bc5832ccc9986f03c9a2164b728e04c0b65b26230",
+    "service_runner_sha256": "eabfffd403825ffa122838e83b4a7daa5fb279e27fe810de78b3d020decf1d08",
+    "request_benchmark_sha256": "3e85c1ba20a8c12901bdfa637b64cb7402cfc233a04776025ba868a68decb882",
+    "devices": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "tp": 2,
+    "dp": 2,
+    "graph_mode": "FULL_DECODE_ONLY",
+    "max_model_len": 2048,
+    "max_num_seqs": 32,
+    "gpu_memory_utilization": 0.8,
+    "prefix_caching": false
+  },
+  "sessions": [
+    {
+      "run_id": "qwen35-tp2-dp2-output-skew-base-20260928-FGgUH0",
+      "variant": "base",
+      "source_sha256": "fc79cbe60641310b94124a1bfd62caa655f02d0f2abbe019f1e718eafa1f0f44",
+      "admission_sha256": "fe444f5239f29992f540ae93228ca9824c33f0cefdd6d2ba02dc85f87d714b03",
+      "server_log_sha256": "fed613fae1ba86cb6089ec166a6f62dc7c7613e36124c796fe548454544f9ba0",
+      "server_exit": 0,
+      "routing_activation_confirmed": false,
+      "rounds": [
+        {
+          "round": 1,
+          "completed": 64,
+          "failed": 0,
+          "input_tokens": 46030,
+          "output_tokens": 18412,
+          "output_tokens_per_s": 337.5245434372914,
+          "mean_latency_s": 12.666564548009774,
+          "p99_latency_s": 22.74134224020876,
+          "raw_result_sha256": "f8c04d3a7f8eb73de1c333efc209e7ab9b14b81c333c8d960ecd6cf7a25d7b9e"
+        },
+        {
+          "round": 2,
+          "completed": 64,
+          "failed": 0,
+          "input_tokens": 46030,
+          "output_tokens": 18412,
+          "output_tokens_per_s": 334.350579785974,
+          "mean_latency_s": 12.770918131325743,
+          "p99_latency_s": 23.066080477619543,
+          "raw_result_sha256": "6ce8ffb447aa75ddacda1209550b42e21bdde1cd7a553dd51b0240fbcbbd80fd"
+        }
+      ],
+      "session_mean_output_tokens_per_s": 335.9375616116327
+    },
+    {
+      "run_id": "qwen35-tp2-dp2-output-skew-weighted-20260928-UUtuI0",
+      "variant": "weighted",
+      "source_sha256": "5aa99499a51ed75867cf28db7376cf4d233188681815fab15d9436b807d1145a",
+      "admission_sha256": "d8c08230e9b1f0b72b11e98ae18e77f8a471f7c30a106dfb658efb7612280349",
+      "server_log_sha256": "dee6fe32b8ec0d13199078bc14d39748729af8cd8fe91a5cad815a9a3d04c526",
+      "server_exit": 0,
+      "routing_activation_confirmed": true,
+      "rounds": [
+        {
+          "round": 1,
+          "completed": 64,
+          "failed": 0,
+          "input_tokens": 46030,
+          "output_tokens": 18412,
+          "output_tokens_per_s": 341.20300073836137,
+          "mean_latency_s": 12.492830143455649,
+          "p99_latency_s": 22.306587244858964,
+          "raw_result_sha256": "0e1862f7d6e9ce3de0a209a08be1edba839171797e192b963a9ff7f902909c3d"
+        },
+        {
+          "round": 2,
+          "completed": 64,
+          "failed": 0,
+          "input_tokens": 46030,
+          "output_tokens": 18412,
+          "output_tokens_per_s": 344.713580542598,
+          "mean_latency_s": 12.342131445242558,
+          "p99_latency_s": 21.7362425936386,
+          "raw_result_sha256": "a040cb36cdb652f6f449988e7ba0cdc5643b5bb4704cd2ec06fb4d2810eeb2cc"
+        }
+      ],
+      "session_mean_output_tokens_per_s": 342.9582906404797
+    },
+    {
+      "run_id": "qwen35-tp2-dp2-output-skew-base-20260928-ZUWEO0",
+      "variant": "base",
+      "source_sha256": "fc79cbe60641310b94124a1bfd62caa655f02d0f2abbe019f1e718eafa1f0f44",
+      "admission_sha256": "fe444f5239f29992f540ae93228ca9824c33f0cefdd6d2ba02dc85f87d714b03",
+      "server_log_sha256": "fc57decae715ac6c310ecc767529b46604f235d3c84dbd23e83c4484caf9149f",
+      "server_exit": 0,
+      "routing_activation_confirmed": false,
+      "rounds": [
+        {
+          "round": 1,
+          "completed": 64,
+          "failed": 0,
+          "input_tokens": 46030,
+          "output_tokens": 18412,
+          "output_tokens_per_s": 336.0696615687835,
+          "mean_latency_s": 12.723932960521779,
+          "p99_latency_s": 22.680069979410618,
+          "raw_result_sha256": "04465d9f17ed1e0dd798ca84e867b45955fcd3ab6b51b82d6e85ab2c6e5db3d7"
+        },
+        {
+          "round": 2,
+          "completed": 64,
+          "failed": 0,
+          "input_tokens": 46030,
+          "output_tokens": 18412,
+          "output_tokens_per_s": 341.6111787588443,
+          "mean_latency_s": 12.489903028545086,
+          "p99_latency_s": 22.023760566459966,
+          "raw_result_sha256": "d6e5daf79c59d6f1c0405e6f56d2364fee569338b75d6be60b29adf26570e771"
+        }
+      ],
+      "session_mean_output_tokens_per_s": 338.84042016381386
+    },
+    {
+      "run_id": "qwen35-tp2-dp2-output-skew-weighted-20260928-zf4w8p",
+      "variant": "weighted",
+      "source_sha256": "5aa99499a51ed75867cf28db7376cf4d233188681815fab15d9436b807d1145a",
+      "admission_sha256": "d8c08230e9b1f0b72b11e98ae18e77f8a471f7c30a106dfb658efb7612280349",
+      "server_log_sha256": "e256bbf4acbe22608b144d780a9579cbd28ac2d5c7aead882df1a2da582f60b1",
+      "server_exit": 0,
+      "routing_activation_confirmed": true,
+      "rounds": [
+        {
+          "round": 1,
+          "completed": 64,
+          "failed": 0,
+          "input_tokens": 46030,
+          "output_tokens": 18412,
+          "output_tokens_per_s": 345.3961067504899,
+          "mean_latency_s": 12.367902917874744,
+          "p99_latency_s": 21.767474946361034,
+          "raw_result_sha256": "a2f75e49c79cca4df29d94e87697406ad8bda1556f112e4f3680941824a5556c"
+        },
+        {
+          "round": 2,
+          "completed": 64,
+          "failed": 0,
+          "input_tokens": 46030,
+          "output_tokens": 18412,
+          "output_tokens_per_s": 345.9291019468872,
+          "mean_latency_s": 12.348082130338298,
+          "p99_latency_s": 21.623849939489737,
+          "raw_result_sha256": "e0c9d5efeac2e095c82a8cac7e5e9a5e84640819c102ce384eed1270f0094786"
+        }
+      ],
+      "session_mean_output_tokens_per_s": 345.66260434868855
+    }
+  ],
+  "pairs": [
+    {
+      "pair": 1,
+      "base_mean_output_tokens_per_s": 335.9375616116327,
+      "weighted_mean_output_tokens_per_s": 342.9582906404797,
+      "change_percent": 2.0898910485524835
+    },
+    {
+      "pair": 2,
+      "base_mean_output_tokens_per_s": 338.84042016381386,
+      "weighted_mean_output_tokens_per_s": 345.66260434868855,
+      "change_percent": 2.0133914901818706
+    }
+  ],
+  "aggregate": {
+    "base_mean_output_tokens_per_s": 337.3889908877233,
+    "weighted_mean_output_tokens_per_s": 344.3104474945841,
+    "change_percent": 2.0514767208761997,
+    "base_mean_p99_latency_s": 22.627813315924723,
+    "weighted_mean_p99_latency_s": 21.858538681087083,
+    "all_rounds_completed": true,
+    "total_requests_per_variant": 256
+  },
+  "limitations": [
+    "Trace order was constructed after natural-trace exploratory runs; no general-workload gain is claimed.",
+    "This isolates the routing switch inside the experimental branch; it does not qualify a main-branch integration.",
+    "Raw prompts, responses, and server logs remain local; hashes identify the retained artifacts."
+  ]
+}
