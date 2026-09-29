@@ -5,12 +5,16 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ascend-distributed-metadata"
 version = "0.2.0"
-description = "Opt-in DP2/DP4 word metadata synchronization for vLLM Ascend"
+description = "Opt-in DP synchronization and load-metadata replica for vLLM Ascend"
 readme = "README.md"
 requires-python = ">=3.11"
 
 [project.entry-points."vllm.general_plugins"]
 adm_packed_sync = "ascend_distributed_metadata.packed_sync:register"
+adm_epoch_replica = "ascend_distributed_metadata.replica_plugin:register"
+
+[project.entry-points."vllm.dp_metadata_plugins"]
+adm_epoch_replica = "ascend_distributed_metadata.replica_plugin:register"
 
 [tool.setuptools.packages.find]
 where = ["src"]
