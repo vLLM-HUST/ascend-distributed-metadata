@@ -2,6 +2,13 @@
 
 ## Combined DP2 plugin and load-metadata replica
 
+The [durable-receipt smoke](qwen35-bf16-durable-receipt-20260929.json)
+repeated the BF16 TP2/DP2 combined service with an existing receipt directory.
+After the injected local API replica loss, routing consumed the recovered
+snapshot and the API wrote one content-addressed JSON file with `0600`
+permissions. The file content matched the log receipt. Automatic loss
+detection and worker restart were outside this check.
+
 The [BF16 Qwen3.5 TP2/DP2 recheck](qwen35-bf16-combined-replica-r2-20260929.json)
 used the published packed synchronization path alongside the optional
 coordinator/API replica on the reviewed core-hook branch. The service became

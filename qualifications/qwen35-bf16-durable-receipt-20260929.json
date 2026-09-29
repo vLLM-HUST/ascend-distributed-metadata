@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "evidence_type": "BF16 service smoke with durable local-replica recovery receipt",
+  "status": "passed",
+  "run_root": "/workspace/kmx/results/adm/qwen35-tp2-dp2-receipt-20260929-7Ky0Wq",
+  "source": {
+    "plugin_revision": "52a5837273b43eaadc909dee1680c35bd4f6dcb4",
+    "core_revision": "dbe6cc64d691f1a768d5409e0d4b5a8f55f5f4f7",
+    "ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "plugin_dirty": false,
+    "core_dirty": false,
+    "ascend_dirty": false,
+    "wheel_sha256": "0ee2848be9ae0f844acea4a4e00a84b2895c4a623cbb78aac6c0d6a3445d6274",
+    "runner_sha256": "d93f08cd4853838a38ee68ee8d45939d88e48b8f0667567d1d3ea29fab7c2406"
+  },
+  "workload": {
+    "model": "Qwen3.5-35B-A3B",
+    "dtype": "bfloat16",
+    "quantization": null,
+    "model_index_sha256": "d8d0b7ca4e61ae107e3e87a3ff21136b3ac7c789e64bb24267227ca804e04205",
+    "devices": [0, 1, 2, 3],
+    "tensor_parallel_size": 2,
+    "data_parallel_size": 2,
+    "graph_mode": "FULL_DECODE_ONLY",
+    "packed_sync_enabled": true,
+    "epoch_replica_enabled": true,
+    "fault_injection": "local API replica invalidated at publication sequence >=1"
+  },
+  "result": {
+    "host_tests": "36 passed",
+    "health": "passed",
+    "completion_request": "passed",
+    "recovery_id": "injected-1",
+    "recovery_consumed_at_publication_seq": 8,
+    "rank_frontiers": [[0, 0, 1, 2], [1, 0, 0, 1]],
+    "receipt_file_count": 1,
+    "receipt_file_mode": "0600",
+    "receipt_file_sha256": "37b0deb0f59939c72efc6e81288c73cda76638bd75f83a7b542c3e703319eba4",
+    "recovery_receipt_summary_sha256": "16218933fff7ef36c590078d017d9809209f5feab5863567d1c95e9d41181293",
+    "server_log_sha256": "d37cddcb9baf7b1a33953f2cb443bf6ee5475a2de5d62f7d24028ad0ba1ea0da",
+    "server_exit": 0,
+    "devices_free_after": true
+  },
+  "limits": "Only injected local API replica loss was exercised. No automatic invalidation trigger, worker restart, coordinator replay request, or throughput comparison was tested."
+}

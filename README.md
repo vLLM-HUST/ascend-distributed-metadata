@@ -61,6 +61,8 @@ one JSON file per consumed recovery receipt. File creation and directory
 metadata are synced before the receipt is acknowledged. A write failure
 prevents that routing read; leaving this variable unset keeps the in-memory
 diagnostic behavior. The process retains at most 64 recent receipts in memory.
+The [BF16 service check](qualifications/qwen35-bf16-durable-receipt-20260929.json)
+verified the file content and `0600` permissions after an injected loss.
 
 ## Results
 
