@@ -1,7 +1,12 @@
 # BF16 MoE DP4 metadata word reuse experiment
 
-Status: source candidate and host tests only. No CPU/Gloo or NPU performance
-result has been collected for this branch.
+Status: experimental, not promoted. Three CPU/Gloo comparisons passed
+correctness and shortened the median DP4 metadata call by 3.1%, 6.0%, and
+4.0%. A W8A8 Qwen3-30B-A3B TP1/DP4 service screen completed 64/64 requests
+in each round but the candidate's two-round mean was 0.91% lower than the
+published MOD. See the [sanitized result record](../qualifications/dp4-reuse-word-exploration-20260928.json).
+BF16 TP2/DP4 was not run because eight devices were not free during this
+screen. The candidate stays on this branch and does not enter `main`.
 
 ## Frozen comparison
 

@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "date_utc": "2026-09-28",
+  "status": "experimental_no_service_gain",
+  "scope": "DP4 buffer reuse candidate; CPU/Gloo call-level and W8A8 Qwen3-30B-A3B TP1/DP4 service screen",
+  "candidate_source_revision": "1ce59c97469e2ca54d760282e7bd1335b32f346a",
+  "test_runner_revision": "f69813d",
+  "microbench": [
+    {
+      "run_id": "qwen35-dp4-reuse-cpu-gloo-20260928-SW4LWy",
+      "published_ms_per_call": 0.3791312512475997,
+      "candidate_ms_per_call": 0.3564112458843738,
+      "change_percent": -5.9926490597811854,
+      "result_sha256": "73ca253d0f3806a0ebc435db2b5363775929537b2b333d2e7dba7b0028c28d10"
+    },
+    {
+      "run_id": "qwen35-dp4-reuse-cpu-gloo-20260928-X8MZof",
+      "published_ms_per_call": 0.41562104830518365,
+      "candidate_ms_per_call": 0.4026912373956293,
+      "change_percent": -3.1109615266790347,
+      "result_sha256": "55722f7333ab8101fc4bef30dd5f083184ba6070faac71ca36873c867df5cb85"
+    },
+    {
+      "run_id": "qwen35-dp4-reuse-cpu-gloo-20260928-ddlT3G",
+      "published_ms_per_call": 0.39551046094857156,
+      "candidate_ms_per_call": 0.37988663651049137,
+      "change_percent": -3.950293603008337,
+      "result_sha256": "92f2ea7e08f1d8e0513a9494f820ed2551288bb761c0e94143e875d07341d919"
+    }
+  ],
+  "service_sessions": [
+    {
+      "variant": "base",
+      "run_id": "dp4-reuse-w8a8-base-20260928-zD7ehx",
+      "source_sha256": "daa17b4d246653e6f98a99c3141fd84df556c60af4ca38fea5588085be33a7c0",
+      "activation_confirmed": false,
+      "rounds": [
+        {
+          "round": 1,
+          "output_tokens_per_s": 457.6931246379897,
+          "p99_latency_s": 16.336530477404594,
+          "result_sha256": "16e394f2aa96642481c30efe73817e5baa845b2d51ce9fbc47cc47ec2af325e8"
+        },
+        {
+          "round": 2,
+          "output_tokens_per_s": 468.75893936945727,
+          "p99_latency_s": 16.009361798716707,
+          "result_sha256": "630fb5bcf8609a7708dfac6ae5023e3689902879fdfee65817d5adbafc0c23ae"
+        }
+      ],
+      "mean_output_tokens_per_s": 463.2260320037235
+    },
+    {
+      "variant": "candidate",
+      "run_id": "dp4-reuse-w8a8-candidate-20260928-EWMMqi",
+      "source_sha256": "1ae1e4387bbdbd78f5da4fc9637abfb301e508656ed6db48d15cacebbb5b7cbd",
+      "activation_confirmed": true,
+      "rounds": [
+        {
+          "round": 1,
+          "output_tokens_per_s": 456.07870821930766,
+          "p99_latency_s": 16.34866690943949,
+          "result_sha256": "f896e1140eef78c35078856412fb056516ba223c30d5ea696e9f3e62775f6109"
+        },
+        {
+          "round": 2,
+          "output_tokens_per_s": 461.91293617843036,
+          "p99_latency_s": 16.409744507158173,
+          "result_sha256": "9856dc66c94a5e51700961ef2dac76686b765df9edfecc1d33c600115a70d66f"
+        }
+      ],
+      "mean_output_tokens_per_s": 458.995822198869
+    }
+  ],
+  "service_change_percent": -0.9132064073679946,
+  "limitations": [
+    "Three CPU/Gloo comparisons are local method-call measurements, not NPU throughput.",
+    "The single W8A8 service pair favored the published MOD, so this candidate is not promoted.",
+    "BF16 TP2/DP4 serving was not run; eight cards were not free at the time of this screen."
+  ]
+}
