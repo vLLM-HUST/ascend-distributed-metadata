@@ -1,5 +1,17 @@
 # Qualification results
 
+## Combined DP2 plugin and load-metadata replica
+
+The [BF16 Qwen3.5 TP2/DP2 recheck](qwen35-bf16-combined-replica-r2-20260929.json)
+used the published packed synchronization path alongside the optional
+coordinator/API replica on the reviewed core-hook branch. The service became
+healthy, answered a completion request, and emitted a recovery receipt after
+an injected local API replica loss and subsequent routing read. The
+[first smoke](qwen35-bf16-combined-replica-20260929.json) ran before an
+additional consumer validation fix. Both runs passed. This is recovery
+correctness evidence for a diagnostic loss, not a throughput comparison or a
+worker-failure test.
+
 ## DP4 word MOD
 
 The [machine-readable record](qwen3moe-dp4-int64-word-20260928.json) covers

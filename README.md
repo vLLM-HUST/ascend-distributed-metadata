@@ -17,7 +17,7 @@ The optional load-metadata replica also needs the opt-in core hooks on
 which descends from the core revision above. The hooks are absent from the
 base core revision. The combined package passed a BF16 TP2/DP2 service and
 local-replica-loss smoke on this hook carrier; see the
-[qualification record](qualifications/qwen35-bf16-combined-replica-20260929.json).
+[qualification recheck](qualifications/qwen35-bf16-combined-replica-r2-20260929.json).
 
 The plugin checks the target Ascend method's AST fingerprint at startup and
 refuses to wrap a different implementation. It does not install vLLM,

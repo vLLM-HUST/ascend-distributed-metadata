@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "evidence_type": "combined plugin BF16 serving and injected local-replica recovery recheck",
+  "status": "passed",
+  "previous_smoke": "qwen35-bf16-combined-replica-20260929.json",
+  "run_root": "/workspace/kmx/results/adm/qwen35-tp2-dp2-combined-r2-20260929-V63bK5",
+  "source": {
+    "plugin_revision": "5c2a792a33cbf37dc657b093df2acdf9658c782f",
+    "core_revision": "dbe6cc64d691f1a768d5409e0d4b5a8f55f5f4f7",
+    "ascend_revision": "367b8e62da799870a7476ce34f5f7658589a8aad",
+    "plugin_dirty": false,
+    "core_dirty": false,
+    "ascend_dirty": false,
+    "replica_source_sha256": "63826d329b674ae7d3d86d12d05e2b43bc392d99d60a25a7bf16ae5601b667a6",
+    "packed_sync_source_sha256": "daa17b4d246653e6f98a99c3141fd84df556c60af4ca38fea5588085be33a7c0",
+    "wheel_sha256": "e2c4434e85ff8256ccc29d6ed9b4200ccbc9fae88c95ec313c3d806d8aa8eccc",
+    "runner_sha256": "6090855db6a29a04f4f0cde5432aa945cc137fb4e0fb930117fb2573f9b4c6e0"
+  },
+  "workload": {
+    "model": "Qwen3.5-35B-A3B",
+    "model_index_sha256": "d8d0b7ca4e61ae107e3e87a3ff21136b3ac7c789e64bb24267227ca804e04205",
+    "dtype": "bfloat16",
+    "quantization": null,
+    "devices": [0, 1, 2, 3],
+    "tensor_parallel_size": 2,
+    "data_parallel_size": 2,
+    "graph_mode": "FULL_DECODE_ONLY",
+    "max_model_len": 2048,
+    "prefix_caching": false,
+    "packed_sync_enabled": true,
+    "epoch_replica_enabled": true,
+    "fault_injection": "local frontend replica invalidated at publication sequence >=1"
+  },
+  "result": {
+    "host_tests": "31 passed",
+    "health": "passed",
+    "completion_request": "passed",
+    "replica_plugin_discovery": "passed",
+    "recovery_id": "injected-1",
+    "recovery_consumed_at_publication_seq": 7,
+    "rank_frontiers": [[0, 0, 1, 2], [1, 0, 0, 1]],
+    "recovery_receipt_sha256": "9437ac4b7bcfeffd742f210f0050e89de75693db8dac1c61bc88cac320d583b4",
+    "server_log_sha256": "392f46bf3f953ce75efbc8b2dbcb9f5c57818dbbaa6efb5c6001dbdfa3d25caa",
+    "server_exit": 0,
+    "devices_free_after": true
+  },
+  "limits": "The recheck used an injected local API replica loss. Automatic loss detection, worker-process recovery, and a performance gain were not tested."
+}
