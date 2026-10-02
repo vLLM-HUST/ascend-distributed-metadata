@@ -25,6 +25,15 @@ enable the optimization. Set `ADM_PACKED_SYNC_ENABLE=1` and include
 disabled. The [dev-hub profile](.vllm-hust/optimization.json) provides the
 named `adm` launch configuration.
 
+The wheel also publishes the experimental ECPA Bundle
+`org.vllm-hust.ascend-distributed-metadata`. Extension Manager can discover,
+inspect, check, plan, and render the same activation without importing this
+module. Enabling the Bundle adds the plugin name and the opt-in environment
+variable to a host-owned launch; it does not start an external service or
+prove that the patch became effective. Compatibility remains restricted to
+the reviewed vLLM/vLLM-Ascend commits and runtime qualification profile, and
+the plugin still verifies the target method's AST fingerprint in every worker.
+
 DP1 and rank-local skip paths use the native method. DP2/DP4 token counts above
 8191 or unsupported graph modes use a group-visible fallback to the native
 collective. The native padding decision is preserved.

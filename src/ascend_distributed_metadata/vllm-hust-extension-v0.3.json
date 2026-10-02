@@ -1,0 +1,71 @@
+{
+  "schema_version": "0.3-experimental",
+  "extension_id": "org.vllm-hust.ascend-distributed-metadata",
+  "extension_version": "0.2.0",
+  "kind": "in_process_plugin",
+  "host": {
+    "provider": "vllm",
+    "name": "vllm",
+    "version_range": ">=0.11.2.dev0,<0.12",
+    "api_range": null
+  },
+  "runtime": {
+    "type": "python",
+    "process_scope": "vllm_workers",
+    "isolation": "trusted_in_process"
+  },
+  "lifecycle_owner": "vllm",
+  "protocols": [
+    {
+      "name": "vllm-ascend.dp-metadata-sync",
+      "version_range": null
+    }
+  ],
+  "implementation": [
+    {
+      "type": "python_entry_point",
+      "group": "vllm.general_plugins",
+      "name": "adm_packed_sync"
+    }
+  ],
+  "requires_services": [],
+  "requires_extensions": [],
+  "resource_claims": [
+    {
+      "resource": "vllm-ascend.dp-metadata-sync",
+      "scope": "vllm-workers",
+      "mode": "exclusive"
+    }
+  ],
+  "components": [
+    {
+      "component_id": "packed-dp-metadata-sync",
+      "contracts": ["vllm.ascend.dp-metadata-sync.v1"],
+      "execution_planes": ["worker", "device"],
+      "isolation": "trusted_in_process",
+      "implementation_ref": "ascend_distributed_metadata.packed_sync:register",
+      "permissions": ["device_access"]
+    }
+  ],
+  "activation": {
+    "entry_points": [
+      {
+        "group": "vllm.general_plugins",
+        "name": "adm_packed_sync"
+      }
+    ],
+    "environment": {
+      "ADM_PACKED_SYNC_ENABLE": "1"
+    },
+    "additional_config": {
+      "_manager_runtime_qualification": {
+        "accelerator": "ascend",
+        "data_parallel_size": 2,
+        "model": "Qwen3.5-35B-A3B",
+        "tensor_parallel_size": 4,
+        "vllm_ascend_commit": "367b8e62da799870a7476ce34f5f7658589a8aad",
+        "vllm_commit": "e1248fa2655fdb8d72f80a5d6c28fa9c75b660c0"
+      }
+    }
+  }
+}

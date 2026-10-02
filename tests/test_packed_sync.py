@@ -3,7 +3,6 @@ from types import SimpleNamespace
 
 import pytest
 import torch
-
 from ascend_distributed_metadata import packed_sync
 
 

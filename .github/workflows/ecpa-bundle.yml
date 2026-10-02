@@ -1,0 +1,25 @@
+name: ECPA Bundle
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  clean-wheel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install --upgrade build
+      - run: python -m build --wheel
+      - run: python -m venv /tmp/adm-ecpa-wheel
+      - run: /tmp/adm-ecpa-wheel/bin/pip install dist/*.whl
+      - run: /tmp/adm-ecpa-wheel/bin/pip install 'git+https://github.com/vLLM-HUST/extension-manager.git@031cbb13ae1dc9deebb09d55dc85a1918cd33dc0'
+      - run: /tmp/adm-ecpa-wheel/bin/vllm-hust-ext extension list --json
+      - run: /tmp/adm-ecpa-wheel/bin/vllm-hust-ext extension inspect org.vllm-hust.ascend-distributed-metadata
+      - run: /tmp/adm-ecpa-wheel/bin/vllm-hust-ext extension check org.vllm-hust.ascend-distributed-metadata
+      - run: /tmp/adm-ecpa-wheel/bin/vllm-hust-ext extension plan org.vllm-hust.ascend-distributed-metadata
+      - run: /tmp/adm-ecpa-wheel/bin/vllm-hust-ext extension render org.vllm-hust.ascend-distributed-metadata
