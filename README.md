@@ -71,3 +71,11 @@ The JSON records include the source revisions, result hashes, and workload.
 The [experiment branches](docs/experiments.md) contain metadata-replica
 recovery, alternative synchronization implementations, and their test records.
 They are separate from this package's `main` runtime path.
+
+## Canonical MOD metadata
+
+Repository identity, directly responsible maintainers, advisor status, default-off
+activation, rollback, scope, and evidence qualification are recorded in
+[`MOD_METADATA.json`](MOD_METADATA.json). `advisor_status: unknown` is not the
+same as confirmed `none`. Performance statements remain limited to the workloads
+and evidence labels recorded there; they are not general online claims.
