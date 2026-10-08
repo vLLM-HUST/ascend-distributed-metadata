@@ -1,0 +1,42 @@
+{
+  "canonical_repository": "https://github.com/vLLM-HUST/ascend-distributed-metadata",
+  "display_name": "ADM",
+  "evidence": {
+    "index": "https://github.com/vLLM-HUST/ascend-distributed-metadata/blob/main/qualifications/qwen3moe-dp4-int64-word-20260928.json",
+    "latest_result": "https://github.com/vLLM-HUST/ascend-distributed-metadata/blob/main/qualifications/qwen3moe-dp4-int64-word-20260928.json",
+    "performance_claims": [],
+    "qualification": "unqualified"
+  },
+  "lifecycle": {
+    "activation_contract": "See the extension manifest and README; discovery alone does not enable this MOD.",
+    "default_enabled": false,
+    "rollback_contract": "Disable the MOD and return to the unmodified host path.",
+    "status": "experimental"
+  },
+  "metadata_source": {
+    "commit": "7df1647048ac5f05fcc502ce4bea94f26d0f5362",
+    "repository": "vLLM-HUST/vllm-hust-website"
+  },
+  "mod_id": "adm",
+  "repository": "ascend-distributed-metadata",
+  "responsibility": {
+    "advisor_status": "unknown",
+    "advisors": [],
+    "maintainers": [
+      {
+        "github": "sad-and-bad1231",
+        "name": "匡明轩"
+      }
+    ],
+    "organization": "vLLM-HUST"
+  },
+  "schema_version": "vllm-hust-mod-metadata-v1",
+  "scope": {
+    "mechanism": "dp_metadata_sync",
+    "out_of_scope": [],
+    "supported_workloads": [
+      "Qwen3-30B-A3B-W8A8 — matched DP4 serving qualified",
+      "Qwen3.5-35B-A3B — DP2 functional; throughput benefit unconfirmed"
+    ]
+  }
+}
