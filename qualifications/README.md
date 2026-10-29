@@ -15,8 +15,10 @@ session, so these results do not imply a per-round gain.
 Two independent CPU/Gloo direct-method comparisons passed correctness checks
 and measured 0.559 vs 0.356 ms and 0.526 vs 0.366 ms per call (published vs
 candidate). These exclude NPU communication and model execution. The record
-includes raw result hashes, code and workload pins, and activation evidence
-for all four DP ranks.
+includes raw result hashes, code and workload pins, and marker observations
+for all four DP ranks. The historical marker was emitted before the collective
+and fallback decision, so it does not establish successful word-path counts or
+entry and fallback rates; those rates are unknown.
 
 ## DP2 scalar MOD
 
