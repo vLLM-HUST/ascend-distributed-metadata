@@ -82,7 +82,20 @@ counts and invalid rank/outcome combinations. Word success and sentinel fallback
 fractions use **completed DP2/DP4 word-or-sentinel calls** on each rank; native
 skip and failed calls are not in that denominator. Zero denominator produces
 `null`. Counters are not request rates and rank totals cannot be summed as unique
-collectives. No snapshot → UNKNOWN. A deployment-owned capture adapter and a
-perturbation measurement are still required before a future NPU window.
+collectives. No snapshot → UNKNOWN. Deployment integration and a perturbation
+measurement are still required before a performance-qualified NPU window.
 Neither a marker nor a counter snapshot is an ECPA attestation or automatically
 proves Manager `runtime_effective`.
+
+An experimental diagnostic adapter is now available: set
+`ADM_PACKED_SYNC_COUNT_PATHS=1` and `ADM_PACKED_SYNC_CAPTURE_DIR` to a fresh,
+private, existing directory unique to the launch. Create `begin`, trigger a
+sync call on every worker and verify all expected `begin-*.json` receipts;
+after the workload create `end` and trigger another sync call on every worker.
+Pair `end-*.json` by PID/start ticks and use
+`python -m ascend_distributed_metadata.evidence --capture-envelopes BEGIN END`.
+Independently require complete TP/DP coverage. Workers observe markers at
+different call boundaries: begin-triggering calls are included, end-triggering
+calls are excluded, and background calls inside the boundaries are included.
+Missing or stale markers and workers are UNKNOWN. File polling and writes are
+observer overhead; use these diagnostics only for path evidence, not performance.

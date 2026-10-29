@@ -35,6 +35,7 @@ WORD_MAX_TOKENS = WORD_SLOT_MASK >> 2
 WORD_MAX_VALUE = (WORD_MAX_TOKENS << 2) | 2
 WORD_SENTINEL = 3
 COUNT_ENV = "ADM_PACKED_SYNC_COUNT_PATHS"
+CAPTURE_DIR_ENV = "ADM_PACKED_SYNC_CAPTURE_DIR"
 
 
 def _process_start_ticks() -> int | None:
@@ -150,6 +151,10 @@ def _wrap(original: Callable[..., Any], runner_module: Any, *, device_guard: boo
     report_dp4 = os.environ.get("ADM_DP4_REPORT_ACTIVE") == "1"
     report_dp2 = os.environ.get("ADM_DP2_REPORT_ACTIVE") == "1"
     counters = _PathCounters() if os.environ.get(COUNT_ENV) == "1" else None
+    capture = None
+    if counters is not None and os.environ.get(CAPTURE_DIR_ENV):
+        from .window_capture import WindowCapture
+        capture = WindowCapture(os.environ[CAPTURE_DIR_ENV], counters)
 
     def packed_sync(
         self: Any,
@@ -159,6 +164,8 @@ def _wrap(original: Callable[..., Any], runner_module: Any, *, device_guard: boo
         allow_dp_padding: bool = False,
     ) -> tuple[int, Any, Any]:
         nonlocal report_dp4, report_dp2
+        if capture is not None:
+            capture.poll(self)
         if self.dp_size == 1:
             result = original(
                 self, num_tokens, is_draft_model, cudagraph_mode, allow_dp_padding
@@ -178,7 +185,10 @@ def _wrap(original: Callable[..., Any], runner_module: Any, *, device_guard: boo
         # NPU to avoid CPU collective corruption. Never replace that path with
         # the CPU packed algorithm; preserve its original device group.
         if device_guard and self.ascend_config.dp_allreduce_on_npu:
-            return original(self, num_tokens, is_draft_model, cudagraph_mode, allow_dp_padding)
+            result = original(self, num_tokens, is_draft_model, cudagraph_mode, allow_dp_padding)
+            if counters is not None:
+                counters.record(self, "native_device_fallback")
+            return result
 
         encoded = _encode(num_tokens, cudagraph_mode)
         if self.dp_size in (2, 4):

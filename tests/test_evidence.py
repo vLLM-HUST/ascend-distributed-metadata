@@ -43,6 +43,15 @@ def test_zero_denominator_is_unknown_and_other_dp_is_not_a_word_path():
     assert group["word_success_fraction"] is None
 
 
+def test_device_fallback_is_not_silently_counted_as_a_word_attempt():
+    before = snapshot()
+    after = snapshot(rows=[("native_device_fallback", 5)])
+    group = window_delta(before, after)["groups"][0]
+    assert group["completed_calls"]["native_device_fallback"] == 5
+    assert group["word_attempts_completed"] == 0
+    assert group["word_success_fraction"] is None
+
+
 @pytest.mark.parametrize("mutation", ["pid", "start", "missing", "decrease", "duplicate", "wrong_rank", "wrong_size"])
 def test_invalid_or_different_worker_snapshots_fail_closed(mutation):
     before = snapshot(rows=[("word_dp2", 10)])

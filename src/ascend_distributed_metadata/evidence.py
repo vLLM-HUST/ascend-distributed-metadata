@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 OUTCOMES = frozenset({"native_dp1", "native_skip", "native_sentinel_fallback",
-                      "word_dp2", "word_dp4", "packed_gather"})
+                      "native_device_fallback", "word_dp2", "word_dp4", "packed_gather"})
 
 
 def _snapshot(data: Any) -> tuple[tuple[int, int], dict[tuple[int, int, str], int]]:
@@ -29,7 +29,7 @@ def _snapshot(data: Any) -> tuple[tuple[int, int], dict[tuple[int, int, str], in
                 or not isinstance(outcome, str) or outcome not in OUTCOMES):
             raise ValueError("invalid path count")
         if ((outcome == "native_dp1" and size != 1)
-                or (outcome in ("native_skip", "native_sentinel_fallback") and size == 1)
+                or (outcome in ("native_skip", "native_sentinel_fallback", "native_device_fallback") and size == 1)
                 or (outcome == "word_dp2" and size != 2)
                 or (outcome == "word_dp4" and size != 4)
                 or (outcome == "packed_gather" and size in (1, 2, 4))):
@@ -68,14 +68,45 @@ def window_delta(before: Any, after: Any) -> dict[str, Any]:
                         "sentinel_fallback_fraction": fallback / denominator if denominator else None})
     return {"schema": "adm-path-window/1", "pid": old_id[0], "start_ticks": old_id[1],
             "groups": results,
-            "scope": "completed worker method calls; fractions exclude native skip and failed calls",
+            "scope": "completed worker method calls; fractions exclude native skip, device fallback and failed calls",
             "ecpa_runtime_effective": "NOT_ASSERTED"}
+
+
+def captured_window(before: Any, after: Any) -> dict[str, Any]:
+    """Validate per-worker boundary metadata, then derive completed-call deltas."""
+    fields = {"schema", "phase", "launch_id", "host", "monotonic_ns", "dp_size", "dp_rank", "snapshot"}
+    if not isinstance(before, dict) or not isinstance(after, dict) or set(before) != fields or set(after) != fields:
+        raise ValueError("invalid capture envelope")
+    if before["schema"] != "adm-worker-capture/1" or after["schema"] != before["schema"]:
+        raise ValueError("invalid capture schema")
+    if before["phase"] != "begin" or after["phase"] != "end":
+        raise ValueError("invalid capture order")
+    for key in ("launch_id", "host"):
+        if not isinstance(before[key], str) or not before[key] or before[key] != after[key]:
+            raise ValueError(f"mismatched {key}")
+    for key in ("dp_size", "dp_rank", "monotonic_ns"):
+        if type(before[key]) is not int or type(after[key]) is not int:
+            raise ValueError(f"invalid {key}")
+    if (before["dp_size"] <= 0 or not 0 <= before["dp_rank"] < before["dp_size"]
+            or (before["dp_size"], before["dp_rank"]) != (after["dp_size"], after["dp_rank"])
+            or before["monotonic_ns"] >= after["monotonic_ns"]):
+        raise ValueError("invalid capture rank or time")
+    delta = window_delta(before["snapshot"], after["snapshot"])
+    if any((group["dp_size"], group["dp_rank"]) != (before["dp_size"], before["dp_rank"])
+           for group in delta["groups"]):
+        raise ValueError("counts do not belong to capture rank")
+    return {"launch_id": before["launch_id"], "host": before["host"],
+            "dp_size": before["dp_size"], "dp_rank": before["dp_rank"],
+            "begin_monotonic_ns": before["monotonic_ns"], "end_monotonic_ns": after["monotonic_ns"],
+            "delta": delta, "window_scope": "per-worker call boundaries, not synchronized across ranks"}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("before", type=Path)
     parser.add_argument("after", type=Path)
+    parser.add_argument("--capture-envelopes", action="store_true",
+                        help="validate worker capture envelopes before computing the delta")
     args = parser.parse_args()
     def unique_pairs(pairs):
         data = {}
@@ -85,7 +116,8 @@ def main() -> None:
             data[key] = value
         return data
 
-    print(json.dumps(window_delta(
+    evaluate = captured_window if args.capture_envelopes else window_delta
+    print(json.dumps(evaluate(
         json.loads(args.before.read_text(), object_pairs_hook=unique_pairs),
         json.loads(args.after.read_text(), object_pairs_hook=unique_pairs),
     ), indent=2))

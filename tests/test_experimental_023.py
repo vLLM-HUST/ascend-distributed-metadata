@@ -53,7 +53,7 @@ def test_exact_native_matches_candidate(padding, draft, rank):
     assert dist.calls == [(4, "cpu"), (1, "cpu")]
 
 
-def test_npu_collective_setting_delegates_without_cpu_collective():
+def test_npu_collective_setting_delegates_without_cpu_collective(monkeypatch):
     source = fixture()
     dist = Collective([1, 2], [0, 0])
     module = SimpleNamespace(torch=torch, dist=dist, CUDAGraphMode=source.CUDAGraphMode,
@@ -66,8 +66,11 @@ def test_npu_collective_setting_delegates_without_cpu_collective():
         return num_tokens, None, cudagraph_mode
     runner = SimpleNamespace(dp_size=2, dp_rank=0, vllm_config=object(),
                              ascend_config=SimpleNamespace(dp_allreduce_on_npu=True))
-    result = packed_sync._wrap(native, module, device_guard=True)(runner, 7)
+    monkeypatch.setenv(packed_sync.COUNT_ENV, "1")
+    wrapped = packed_sync._wrap(native, module, device_guard=True)
+    result = wrapped(runner, 7)
     assert calls == [7] and dist.calls == [] and result[0] == 7
+    assert wrapped._adm_path_counts_snapshot()["counts"][0]["outcome"] == "native_device_fallback"
 
 
 def test_023_is_explicitly_opt_in_and_checks_both_source_functions(monkeypatch):

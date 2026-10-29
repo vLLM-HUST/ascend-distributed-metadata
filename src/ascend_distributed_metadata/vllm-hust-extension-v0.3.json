@@ -1,7 +1,7 @@
 {
   "schema_version": "0.3-experimental",
   "extension_id": "org.vllm-hust.ascend-distributed-metadata",
-  "extension_version": "0.2.1.dev1",
+  "extension_version": "0.2.1.dev2",
   "kind": "in_process_plugin",
   "host": {
     "provider": "vllm",
