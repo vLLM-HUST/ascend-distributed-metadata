@@ -22,3 +22,9 @@ order can expose order effects but still cannot establish an end-to-end gain.
 The earlier post-request process-group shutdown logged API `EngineDeadError`;
 it is a cleanup log, not an inference failure. HOLD for dataset and performance
 claims and for ECPA host compatibility.
+
+Reverse ON completed 4/4 with the same four text hashes and markers from all
+four workers; receipt SHA-256
+`a46c6f75199f96f76141d19ca1940bb2da8eae1f8b2a0e870006f802b26f4180`.
+On shutdown Python reported eight shared-memory objects for resource-tracker
+cleanup; no vLLM process or NPU process remained visible. Reverse OFF is pending.
