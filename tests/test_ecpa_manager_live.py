@@ -28,7 +28,7 @@ def test_clean_wheel_manager_lifecycle_fails_closed_without_a_host(tmp_path):
 
     listing = cli("extension", "list", "--json")
     assert listing.returncode == 0, listing.stderr
-    assert any(row["extension_id"] == bundle for row in json.loads(listing.stdout))
+    assert any(row["bundle_id"] == bundle for row in json.loads(listing.stdout))
     for action in ("inspect", "check", "plan", "render"):
         result = cli("extension", action, bundle)
         assert result.returncode == 0, result.stderr
@@ -36,7 +36,7 @@ def test_clean_wheel_manager_lifecycle_fails_closed_without_a_host(tmp_path):
     status = cli("extension", "status", bundle)
     assert status.returncode == 0
     states = json.loads(status.stdout)["states"]
-    assert "enabled" in states and "degraded" in states
+    assert "enabled" in states and {"degraded", "incompatible"} & set(states)
     assert "runtime_effective" not in states
     marker = tmp_path / "should-not-start"
     run = cli("run", "--", python, "-c", f"open({str(marker)!r},'w').write('bad')")

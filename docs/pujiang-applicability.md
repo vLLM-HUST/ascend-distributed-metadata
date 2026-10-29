@@ -6,7 +6,8 @@ Reviewed inputs: ADM main `3bc9e876ee862b20accbe98149c0ad6ff458e16d`,
 [benchmark #254](https://github.com/vLLM-HUST/vllm-hust-benchmark/issues/254),
 [#403](https://github.com/vLLM-HUST/vllm-hust-benchmark/issues/403),
 [dataset program #253](https://github.com/vLLM-HUST/vllm-hust-benchmark/pull/253),
-benchmark main `c17289b58c0e3d93033d8426d8d8b55ce17fc253`, and Extension
+benchmark snapshot `c17289b58c0e3d93033d8426d8d8b55ce17fc253`, subsequent
+main `a181a5e94414bca9b51bb89e5ce2da6bdcef38ce`, and Extension
 Manager main `a78c9681ee428589dc7666c0c159cb24c3f0c58a`. Issue #403's current
 **plan-review-first / zero-new-measurement** section overrides its historical
 SWE/Terminal queue and old AMD64-backend text. No agent, container, NPU server,
@@ -47,6 +48,13 @@ needed; widening the version range or bypassing the fingerprint is not a fix.
 support. `blocked` describes an ADM experiment whose prerequisites are missing;
 it does **not** mean the underlying dataset has no working benchmark adapter.
 No dataset currently has a qualified ADM ON/OFF task-quality result.
+
+The latest benchmark [client directory](https://github.com/vLLM-HUST/vllm-hust-benchmark/blob/a181a5e94414bca9b51bb89e5ce2da6bdcef38ce/docs/dataset-entrypoints/primary-clients.json)
+also pins reusable MMLU-Pro (`b6215bf...`), HLE (`534c22c...`) and
+FrontierScience (`ff7b431...`) clients with setup and command examples. Its
+MMLU local extraction policy is not the original leaderboard scorer; HLE and
+FrontierScience use substitute judges. Reported client installation/help checks
+do not establish that data preparation, model requests, or scoring were run.
 
 | Dataset | V5.5 TP2/DP1 ADM path | ADM DP2/DP4 ablation | Reusable organization evidence / runner | Quality and concrete blocker / owner |
 | --- | --- | --- | --- | --- |
