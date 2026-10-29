@@ -1,0 +1,118 @@
+"""Bounded, synthetic four-card diagnostic. Not a dataset score or benchmark."""
+
+import argparse
+from concurrent.futures import ThreadPoolExecutor
+import hashlib
+import json
+import os
+from pathlib import Path
+import signal
+import socket
+import subprocess
+import sys
+import time
+import urllib.request
+
+MODEL = "/data/shared_upload/models/vspec/Qwen3.5-35B-A3B"
+PROMPTS = [
+    "Explain what a key-value cache does in a transformer.",
+    "Give three reasons to validate a numerical experiment.",
+    "Explain the difference between latency and throughput.",
+    "Describe how a distributed process group can synchronize metadata.",
+]
+PINS = {"/vllm-workspace/vllm": "0fc695fc6d1d82e9a5ac6835ac8e4e1c83703665",
+        "/vllm-workspace/vllm-ascend": "5cb98caaadeff42b5b62b996e34bb2aaa29d20fd"}
+
+
+def request(port, endpoint, payload=None, timeout=3):
+    data = None if payload is None else json.dumps(payload).encode()
+    req = urllib.request.Request(f"http://127.0.0.1:{port}{endpoint}", data=data,
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(req, timeout=timeout) as response:
+        return json.load(response)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--arm", choices=["off", "on"], required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--port", type=int, default=18761)
+    args = parser.parse_args()
+    for root, expected in PINS.items():
+        actual = subprocess.check_output(["git", "-C", root, "rev-parse", "HEAD"], text=True).strip()
+        if actual != expected or subprocess.run(["git", "-C", root, "diff", "--quiet"]).returncode or subprocess.run(["git", "-C", root, "diff", "--cached", "--quiet"]).returncode:
+            raise RuntimeError(f"unreviewed or dirty runtime: {root}")
+    args.output.mkdir(parents=True, exist_ok=False)
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", args.port))
+    cmd = [sys.executable, "-m", "vllm.entrypoints.cli.main", "serve", MODEL,
+        "--host", "127.0.0.1", "--port", str(args.port), "--served-model-name", "adm-probe",
+        "--tensor-parallel-size", "2", "--data-parallel-size", "2",
+        "--distributed-executor-backend", "mp", "--dtype", "bfloat16",
+        "--max-model-len", "4096", "--max-num-seqs", "4", "--max-num-batched-tokens", "4096",
+        "--gpu-memory-utilization", "0.9", "--kv-cache-memory-bytes", "2147483648",
+        "--seed", "17", "--enforce-eager", "--enable-chunked-prefill",
+        "--limit-mm-per-prompt", '{"image":0,"video":0}', "--generation-config", "vllm"]
+    env = os.environ.copy()
+    for key in list(env):
+        if key.startswith("ADM_"):
+            env.pop(key)
+    env.update({"ASCEND_RT_VISIBLE_DEVICES": "0,1,2,3", "HF_HUB_OFFLINE": "1",
+        "TRANSFORMERS_OFFLINE": "1", "VLLM_WORKER_MULTIPROC_METHOD": "spawn",
+        "VLLM_PLUGINS": "ascend,ascend_model,ascend_model_loader,ascend_kv_connector,adm_packed_sync",
+        "ADM_PACKED_SYNC_ENABLE": "1" if args.arm == "on" else "0",
+        "ADM_EXPERIMENTAL_023_ENABLE": "1", "ADM_DP2_REPORT_ACTIVE": "1",
+        "NO_PROXY": "localhost,127.0.0.1,::1", "no_proxy": "localhost,127.0.0.1,::1"})
+    receipt = {"arm": args.arm, "command": cmd, "seed": 17, "devices": [0, 1, 2, 3], "source_pins": PINS,
+               "classification": "synthetic eager diagnostic, not official score or performance claim",
+               "status": "starting", "results": []}
+    path = args.output / "receipt.json"
+    path.write_text(json.dumps(receipt, indent=2))
+    server = None
+    try:
+        with (args.output / "server.log").open("w") as log:
+            server = subprocess.Popen(cmd, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                      start_new_session=True)
+            deadline = time.monotonic() + 900
+            while time.monotonic() < deadline:
+                if server.poll() is not None:
+                    raise RuntimeError(f"server exited {server.returncode}")
+                try:
+                    request(args.port, "/v1/models")
+                    break
+                except Exception:
+                    time.sleep(3)
+            else:
+                raise TimeoutError("server did not become ready in 900 seconds")
+            def invoke(prompt):
+                start = time.monotonic()
+                result = request(args.port, "/v1/completions", {
+                    "model": "adm-probe", "prompt": prompt, "temperature": 0,
+                    "seed": 17, "max_tokens": 32, "ignore_eos": True}, timeout=240)
+                choice = result["choices"][0]
+                return {"elapsed_s": time.monotonic() - start,
+                        "text_sha256": hashlib.sha256(choice["text"].encode()).hexdigest(),
+                        "finish_reason": choice["finish_reason"], "usage": result.get("usage")}
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                receipt["results"] = list(pool.map(invoke, PROMPTS))
+            receipt["status"] = "complete"
+    except Exception as exc:
+        receipt["status"] = "failed"
+        receipt["error"] = f"{type(exc).__name__}: {exc}"
+    finally:
+        if server is not None:
+            try:
+                os.killpg(server.pid, signal.SIGTERM)
+                server.wait(timeout=30)
+            except ProcessLookupError:
+                pass
+            except subprocess.TimeoutExpired:
+                os.killpg(server.pid, signal.SIGKILL)
+                server.wait(timeout=30)
+        path.write_text(json.dumps(receipt, indent=2))
+    print(json.dumps(receipt, indent=2))
+    return 0 if receipt["status"] == "complete" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

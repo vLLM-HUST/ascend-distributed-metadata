@@ -19,6 +19,9 @@ from typing import Any
 
 ENABLE_ENV = "ADM_PACKED_SYNC_ENABLE"
 TARGET_FINGERPRINT = "3e3cac40908b68c65c45c820efca81073c0a11bef5eab13b2f8cf9ce36e407f5"
+EXPERIMENTAL_023_FINGERPRINT = "14121d45961602089f2f8525c44a7ad7bf73922495eb243003480a927b7c0948"
+EXPERIMENTAL_023_HELPER_FINGERPRINT = "8e689cb1d725ea9c8de81f0e8f7c24037b2cb8033597d414e21c8464a7d2a19b"
+EXPERIMENTAL_023_ENV = "ADM_EXPERIMENTAL_023_ENABLE"
 ORIGINAL_ATTR = "_adm_packed_sync_original"
 # Two low bits hold the concrete runtime CUDAGraphMode (0, 1, or 2).
 # The remaining signed int32 bits hold a nonnegative token count.
@@ -137,7 +140,7 @@ def _encode(num_tokens: Any, mode: Any) -> int:
     return (tokens << 2) | mode_value
 
 
-def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any]:
+def _wrap(original: Callable[..., Any], runner_module: Any, *, device_guard: bool = False) -> Callable[..., Any]:
     torch = runner_module.torch
     dist = runner_module.dist
     get_dp_group = runner_module.get_dp_group
@@ -145,6 +148,7 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
     graph_mode_type = runner_module.CUDAGraphMode
     default_mode = inspect.signature(original).parameters["cudagraph_mode"].default
     report_dp4 = os.environ.get("ADM_DP4_REPORT_ACTIVE") == "1"
+    report_dp2 = os.environ.get("ADM_DP2_REPORT_ACTIVE") == "1"
     counters = _PathCounters() if os.environ.get(COUNT_ENV) == "1" else None
 
     def packed_sync(
@@ -154,7 +158,7 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
         cudagraph_mode: Any = default_mode,
         allow_dp_padding: bool = False,
     ) -> tuple[int, Any, Any]:
-        nonlocal report_dp4
+        nonlocal report_dp4, report_dp2
         if self.dp_size == 1:
             result = original(
                 self, num_tokens, is_draft_model, cudagraph_mode, allow_dp_padding
@@ -169,6 +173,12 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
             if counters is not None:
                 counters.record(self, "native_skip")
             return result
+
+        # The reviewed 0.23 host can deliberately route this collective to an
+        # NPU to avoid CPU collective corruption. Never replace that path with
+        # the CPU packed algorithm; preserve its original device group.
+        if device_guard and self.ascend_config.dp_allreduce_on_npu:
+            return original(self, num_tokens, is_draft_model, cudagraph_mode, allow_dp_padding)
 
         encoded = _encode(num_tokens, cudagraph_mode)
         if self.dp_size in (2, 4):
@@ -222,6 +232,12 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
             except (OSError, ValueError):
                 # Optional evidence must not change serving correctness.
                 pass
+        if self.dp_size == 2 and report_dp2:
+            report_dp2 = False
+            try:
+                print(f"adm_dp2_word_active=rank:{self.dp_rank},dtype:int32", flush=True)
+            except (OSError, ValueError):
+                pass
         return max_tokens, token_vector, synced_mode
 
     packed_sync.__name__ = original.__name__
@@ -240,10 +256,17 @@ def install(runner_type: type[Any], runner_module: Any) -> bool:
     if hasattr(runner_type, "_adm_runtime_original_sync_metadata_across_dp"):
         raise PackedSyncViolation("ADM runtime observer is already installed")
     original = runner_type._sync_metadata_across_dp
-    if _fingerprint(original) != TARGET_FINGERPRINT:
+    fingerprint = _fingerprint(original)
+    experimental_023 = (
+        os.environ.get(EXPERIMENTAL_023_ENV) == "1"
+        and fingerprint == EXPERIMENTAL_023_FINGERPRINT
+        and _fingerprint(getattr(runner_module, "_post_process_cudagraph_mode", None))
+        == EXPERIMENTAL_023_HELPER_FINGERPRINT
+    )
+    if fingerprint != TARGET_FINGERPRINT and not experimental_023:
         raise PackedSyncViolation("Ascend DP sync source does not match reviewed pin")
     setattr(runner_type, ORIGINAL_ATTR, original)
-    runner_type._sync_metadata_across_dp = _wrap(original, runner_module)
+    runner_type._sync_metadata_across_dp = _wrap(original, runner_module, device_guard=experimental_023)
     return True
 
 
