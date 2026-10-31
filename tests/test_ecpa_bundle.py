@@ -1,7 +1,9 @@
 import json
+import os
 from pathlib import Path
-
 import tomllib
+
+import pytest
 
 ROOT = Path(__file__).parents[1]
 PACKAGE = ROOT / "src" / "ascend_distributed_metadata"
@@ -31,6 +33,12 @@ def test_ecpa_manifest_keeps_install_separate_from_enablement():
 
     assert manifest["schema_version"] == "0.3-experimental"
     assert manifest["extension_id"] == BUNDLE_ID
+    assert manifest["extension_version"] == tomllib.loads(
+        (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    )["project"]["version"]
+    # In the stable 0.3 schema the optional api_range, if present, must be
+    # a string. Omission preserves the legacy parser's None semantics.
+    assert "api_range" not in manifest["host"]
     assert manifest["activation"]["entry_points"] == [
         {"group": "vllm.general_plugins", "name": "adm_packed_sync"}
     ]
@@ -57,3 +65,26 @@ def test_ecpa_manifest_pins_the_reviewed_runtime_qualification():
     assert qualification["vllm_ascend_commit"] == (
         "367b8e62da799870a7476ce34f5f7658589a8aad"
     )
+
+
+def test_diagnostic_environment_is_available_but_not_enabled_by_profile():
+    profile = json.loads((ROOT / ".vllm-hust/optimization.json").read_text())
+    activation = profile["activation"]
+    for name in ("ADM_PACKED_SYNC_COUNT_PATHS", "ADM_PACKED_SYNC_CAPTURE_DIR", "ADM_DP4_REPORT_ACTIVE"):
+        assert name in activation["extra_env_keys"]
+        assert name not in activation["environment"]
+
+
+def test_ecpa_current_schema_shape_when_reference_is_supplied():
+    schema_path = os.getenv("ADM_ECPA_SCHEMA_FILE")
+    if not schema_path:
+        pytest.skip("set ADM_ECPA_SCHEMA_FILE to the reviewed Manager 0.3 schema")
+    jsonschema = pytest.importorskip("jsonschema")
+    manifest = _manifest()
+    # Existing 0.3-experimental is a documented read-only Manager alias. The
+    # normative schema itself accepts only 0.3; validate the shared field shape.
+    assert manifest["schema_version"] == "0.3-experimental"
+    manifest["schema_version"] = "0.3"
+    jsonschema.Draft202012Validator(
+        json.loads(Path(schema_path).read_text(encoding="utf-8"))
+    ).validate(manifest)
