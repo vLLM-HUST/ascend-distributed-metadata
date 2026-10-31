@@ -62,7 +62,12 @@ def window_delta(before: Any, after: Any) -> dict[str, Any]:
         word = counts.get("word_dp2" if size == 2 else "word_dp4", 0) if size in (2, 4) else None
         fallback = counts.get("native_sentinel_fallback", 0) if size in (2, 4) else None
         denominator = word + fallback if word is not None and fallback is not None else 0
+        total = sum(counts.values())
+        native = sum(value for outcome, value in counts.items() if outcome.startswith("native_"))
         results.append({"dp_size": size, "dp_rank": rank, "completed_calls": counts,
+                        "all_completed_calls": total,
+                        "word_fraction_all_completed": word / total if word is not None and total else None,
+                        "native_fraction_all_completed": native / total if total else None,
                         "word_attempts_completed": denominator if size in (2, 4) else None,
                         "word_success_fraction": word / denominator if denominator else None,
                         "sentinel_fallback_fraction": fallback / denominator if denominator else None})

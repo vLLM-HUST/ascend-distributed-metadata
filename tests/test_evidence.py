@@ -23,6 +23,9 @@ def test_window_rates_use_completed_collective_attempts_not_skip_or_requests():
     result = window_delta(before, after)
     group = result["groups"][0]
     assert group["completed_calls"]["native_skip"] == 2
+    assert group["all_completed_calls"] == 10
+    assert group["word_fraction_all_completed"] == 0.7
+    assert group["native_fraction_all_completed"] == 0.3
     assert group["word_attempts_completed"] == 8
     assert group["word_success_fraction"] == 7 / 8
     assert group["sentinel_fallback_fraction"] == 1 / 8
@@ -34,6 +37,8 @@ def test_zero_denominator_is_unknown_and_other_dp_is_not_a_word_path():
     group = window_delta(one, one)["groups"][0]
     assert group["word_attempts_completed"] == 0
     assert group["word_success_fraction"] is None
+    assert group["word_fraction_all_completed"] is None
+    assert group["native_fraction_all_completed"] is None
     assert group["sentinel_fallback_fraction"] is None
     before = snapshot()
     after = snapshot()

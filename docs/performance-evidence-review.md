@@ -82,8 +82,11 @@ counts and invalid rank/outcome combinations. Word success and sentinel fallback
 fractions use **completed DP2/DP4 word-or-sentinel calls** on each rank; native
 skip and failed calls are not in that denominator. Zero denominator produces
 `null`. Counters are not request rates and rank totals cannot be summed as unique
-collectives. No snapshot → UNKNOWN. A deployment-owned capture adapter and a
-perturbation measurement are still required before a future NPU window.
+collectives. No snapshot → UNKNOWN. Benchmark integration and a perturbation
+measurement are still required before a performance-qualified NPU window.
+`word_fraction_all_completed` and `native_fraction_all_completed` instead use
+all completed instrumented calls on that worker, including native skip, as the
+denominator. Failed calls remain excluded and must not be assumed absent.
 Neither a marker nor a counter snapshot is an ECPA attestation or automatically
 proves Manager `runtime_effective`.
 
