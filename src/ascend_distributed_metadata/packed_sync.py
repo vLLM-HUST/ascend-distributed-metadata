@@ -13,6 +13,7 @@ import importlib
 import inspect
 import os
 import textwrap
+import threading
 from collections.abc import Callable
 from typing import Any
 
@@ -30,6 +31,73 @@ WORD_SLOT_MASK = (1 << WORD_SLOT_BITS) - 1
 WORD_MAX_TOKENS = WORD_SLOT_MASK >> 2
 WORD_MAX_VALUE = (WORD_MAX_TOKENS << 2) | 2
 WORD_SENTINEL = 3
+COUNT_ENV = "ADM_PACKED_SYNC_COUNT_PATHS"
+CAPTURE_DIR_ENV = "ADM_PACKED_SYNC_CAPTURE_DIR"
+
+
+def _process_start_ticks() -> int | None:
+    """Linux process identity for pairing snapshots; unknown fails closed."""
+    try:
+        with open("/proc/self/stat", encoding="ascii") as stream:
+            stat = stream.read()
+        tail = stat[stat.rindex(")") + 2 :].split()
+        ticks = int(tail[19])  # /proc stat field 22; tail begins at field 3.
+        return ticks if ticks > 0 else None
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+class _PathCounters:
+    """Opt-in completed-call counts, local to one process and DP rank.
+
+    A forked child starts a fresh set of counters. Counts are only diagnostic:
+    the caller must take both snapshots in the owning worker and preserve the
+    process/launch identity separately. They are not ECPA attestations.
+    """
+
+    def __init__(self) -> None:
+        self._pid = os.getpid()
+        self._start_ticks = _process_start_ticks()
+        self._lock = threading.Lock()
+        self._counts: dict[tuple[int, int | None, str], int] = {}
+
+    def _after_fork_if_needed(self) -> None:
+        pid = os.getpid()
+        if pid != self._pid:
+            # Never acquire a lock inherited from another process.
+            self._pid = pid
+            self._start_ticks = _process_start_ticks()
+            self._lock = threading.Lock()
+            self._counts = {}
+
+    def record(self, runner: Any, outcome: str) -> None:
+        self._after_fork_if_needed()
+        key = (runner.dp_size, getattr(runner, "dp_rank", None), outcome)
+        with self._lock:
+            self._counts[key] = self._counts.get(key, 0) + 1
+
+    def snapshot(self) -> dict[str, Any]:
+        self._after_fork_if_needed()
+        with self._lock:
+            counts = [
+                {"dp_size": dp, "dp_rank": rank, "outcome": outcome, "calls": count}
+                for (dp, rank, outcome), count in self._counts.items()
+            ]
+        counts.sort(key=lambda item: (item["dp_size"], str(item["dp_rank"]), item["outcome"]))
+        return {"schema": "adm-path-counts/1", "pid": self._pid,
+                "start_ticks": self._start_ticks, "counts": counts}
+
+
+def snapshot_path_counts(runner_type: type[Any]) -> dict[str, Any] | None:
+    """Read local counters from the installed wrapper, or None if disabled.
+
+    Only a process-owned observer can call this in the worker being measured.
+    Take before/after snapshots in the same process over the desired window;
+    startup and warmup calls must not be relabeled as measurement calls.
+    """
+    method = runner_type._sync_metadata_across_dp
+    snapshot = getattr(method, "_adm_path_counts_snapshot", None)
+    return snapshot() if snapshot is not None else None
 
 
 class PackedSyncViolation(RuntimeError):
@@ -39,9 +107,18 @@ class PackedSyncViolation(RuntimeError):
 def _fingerprint(function: Callable[..., Any]) -> str | None:
     try:
         source = inspect.getsource(function)
-        normalized = ast.dump(
-            ast.parse(textwrap.dedent(source)), include_attributes=False
-        )
+        tree = ast.parse(textwrap.dedent(source))
+        # Python 3.12 added an empty type_params field to function/class ASTs.
+        # The reviewed fingerprint was produced by Python 3.11; omit only
+        # that new *empty* field so identical source hashes identically. Never
+        # erase real generic parameters, which are outside the reviewed source.
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                if getattr(node, "type_params", ()):
+                    return None
+                if "type_params" in node._fields:
+                    node._fields = tuple(field for field in node._fields if field != "type_params")
+        normalized = ast.dump(tree, include_attributes=False)
         return hashlib.sha256(normalized.encode()).hexdigest()
     except (OSError, TypeError, SyntaxError):
         return None
@@ -69,6 +146,11 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
     graph_mode_type = runner_module.CUDAGraphMode
     default_mode = inspect.signature(original).parameters["cudagraph_mode"].default
     report_dp4 = os.environ.get("ADM_DP4_REPORT_ACTIVE") == "1"
+    counters = _PathCounters() if os.environ.get(COUNT_ENV) == "1" else None
+    capture = None
+    if counters is not None and os.environ.get(CAPTURE_DIR_ENV):
+        from .window_capture import WindowCapture
+        capture = WindowCapture(os.environ[CAPTURE_DIR_ENV], counters)
 
     def packed_sync(
         self: Any,
@@ -78,16 +160,25 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
         allow_dp_padding: bool = False,
     ) -> tuple[int, Any, Any]:
         nonlocal report_dp4
-        if self.dp_size == 1 or should_skip(self.vllm_config, is_draft_model):
-            return original(
+        if capture is not None:
+            capture.poll(self)
+        if self.dp_size == 1:
+            result = original(
                 self, num_tokens, is_draft_model, cudagraph_mode, allow_dp_padding
             )
+            if counters is not None:
+                counters.record(self, "native_dp1")
+            return result
+        if should_skip(self.vllm_config, is_draft_model):
+            result = original(
+                self, num_tokens, is_draft_model, cudagraph_mode, allow_dp_padding
+            )
+            if counters is not None:
+                counters.record(self, "native_skip")
+            return result
 
         encoded = _encode(num_tokens, cudagraph_mode)
         if self.dp_size in (2, 4):
-            if self.dp_size == 4 and report_dp4:
-                print(f"adm_dp4_word_active=rank:{self.dp_rank},dtype:int64", flush=True)
-                report_dp4 = False
             slot = encoded if 0 <= encoded <= WORD_MAX_VALUE else WORD_SENTINEL
             packed = torch.tensor(
                 [slot << (WORD_SLOT_BITS * self.dp_rank)],
@@ -108,9 +199,12 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
             values = gathered.tolist()
         if any(value < 0 or (value & 3) == WORD_SENTINEL for value in values):
             # All ranks see the sentinel and enter the same native collective.
-            return original(
+            result = original(
                 self, num_tokens, is_draft_model, cudagraph_mode, allow_dp_padding
             )
+            if counters is not None:
+                counters.record(self, "native_sentinel_fallback")
+            return result
 
         tokens = [value >> 2 for value in values]
         max_tokens = max(tokens)
@@ -121,10 +215,26 @@ def _wrap(original: Callable[..., Any], runner_module: Any) -> Callable[..., Any
             )
         else:
             token_vector = torch.tensor(tokens, device="cpu", dtype=torch.int32)
+        if counters is not None:
+            outcome = "word_dp2" if self.dp_size == 2 else (
+                "word_dp4" if self.dp_size == 4 else "packed_gather"
+            )
+            counters.record(self, outcome)
+        if self.dp_size == 4 and report_dp4:
+            # Historical versions printed before the collective and could
+            # falsely mark a later fallback (or failed collective) as active.
+            report_dp4 = False
+            try:
+                print(f"adm_dp4_word_active=rank:{self.dp_rank},dtype:int64", flush=True)
+            except (OSError, ValueError):
+                # Optional evidence must not change serving correctness.
+                pass
         return max_tokens, token_vector, synced_mode
 
     packed_sync.__name__ = original.__name__
     packed_sync.__doc__ = original.__doc__
+    if counters is not None:
+        packed_sync._adm_path_counts_snapshot = counters.snapshot  # type: ignore[attr-defined]
     return packed_sync
 
 

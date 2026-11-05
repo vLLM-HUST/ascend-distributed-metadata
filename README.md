@@ -44,7 +44,8 @@ The [Qwen3-30B-A3B-W8A8 DP4 comparison](qualifications/qwen3moe-dp4-int64-word-2
 used the same 64-request trace for six TP1/DP4 service sessions, with two
 rounds per session. All 12 rounds completed 64/64 requests. The three matched
 session means favored the DP4 word path by 0.38%, 0.71%, and 1.32%; overall
-mean output throughput was 467.099 vs 463.376 tok/s (+0.80%). Two local
+mean output throughput was 467.099 vs 463.376 tok/s (+0.80%) against the
+previous MOD, not native vLLM. Two local
 CPU/Gloo method-call runs measured 30.5% and 36.2% less time. The service
 difference is small and individual rounds varied; the call-level result has
 a narrower scope than full-model serving.
@@ -56,6 +57,11 @@ output tok/s. Two local CPU/Gloo metadata-call comparisons measured 26.8%
 and 32.4% lower median time than that previous MOD. These measurements have
 different scopes; the small serving difference may reflect run variation.
 The JSON records include the source revisions, result hashes, and workload.
+
+The [historical evidence review](docs/performance-evidence-review.md) separates
+the service and CPU results, records the limitations of worker activation
+evidence, and explains the optional per-worker path counters. Historical path
+entry and fallback rates remain unknown.
 
 ## Repository layout
 

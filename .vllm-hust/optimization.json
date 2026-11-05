@@ -20,7 +20,12 @@
     "environment": {
       "ADM_PACKED_SYNC_ENABLE": "1"
     },
-    "extra_env_keys": ["ADM_PACKED_SYNC_ENABLE"],
+    "extra_env_keys": [
+      "ADM_PACKED_SYNC_ENABLE",
+      "ADM_PACKED_SYNC_COUNT_PATHS",
+      "ADM_PACKED_SYNC_CAPTURE_DIR",
+      "ADM_DP4_REPORT_ACTIVE"
+    ],
     "extra_args": [
       "--tensor-parallel-size", "4",
       "--data-parallel-size", "2"
