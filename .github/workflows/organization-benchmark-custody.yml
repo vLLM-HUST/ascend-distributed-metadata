@@ -30,4 +30,5 @@ jobs:
           case "$PR_NUMBER" in ''|*[!0-9]*) exit 1;; esac
           EXPECTED=$(gh api "repos/$REPOSITORY/pulls/$PR_NUMBER" --jq .changed_files)
           gh api --paginate --slurp "repos/$REPOSITORY/pulls/$PR_NUMBER/files?per_page=100" > /tmp/custody-pr-files.json
-          python scripts/benchmark_data_policy.py pr --files /tmp/custody-pr-files.json --expected "$EXPECTED"
+          python scripts/benchmark_data_policy.py pr --files /tmp/custody-pr-files.json \
+            --expected "$EXPECTED" --repository "$REPOSITORY" --pull-request "$PR_NUMBER"
