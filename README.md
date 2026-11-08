@@ -65,6 +65,10 @@ entry and fallback rates remain unknown.
 
 ## Repository layout
 
+The [Pujiang applicability matrix and execution contract](docs/pujiang-applicability.md)
+records the five dataset boundaries, reusable benchmark infrastructure, and
+the separate official B0/B1 and same-stack ADM OFF/ON comparisons.
+
 | Path | Contents |
 | --- | --- |
 | `src/ascend_distributed_metadata/` | Runtime plugin |
