@@ -265,3 +265,85 @@ def test_disabled_entrypoint_does_not_import_ascend(monkeypatch):
     monkeypatch.setenv(packed_sync.ENABLE_ENV, "invalid")
     with pytest.raises(packed_sync.PackedSyncViolation, match="must be 0 or 1"):
         packed_sync.register()
+
+
+def test_dp4_active_marker_requires_completed_fast_path(monkeypatch, capsys):
+    monkeypatch.setenv("ADM_DP4_REPORT_ACTIVE", "1")
+    values = [packed_sync._encode(7, Mode.FULL), packed_sync.WORD_SENTINEL,
+              packed_sync._encode(3, Mode.NONE), packed_sync._encode(9, Mode.FULL)]
+    module, dist = module_for(values)
+    wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+    runner = Runner(rank=0)
+    wrapped(runner, 7, cudagraph_mode=Mode.FULL)
+    assert runner.native_calls == 1
+    assert "adm_dp4_word_active" not in capsys.readouterr().out
+
+    # The first successful word path, rather than the earlier fallback, emits
+    # exactly one process-local marker.
+    dist.values[1] = packed_sync._encode(8, Mode.FULL)
+    wrapped(runner, 7, cudagraph_mode=Mode.FULL)
+    assert "adm_dp4_word_active=rank:0,dtype:int64" in capsys.readouterr().out
+    wrapped(runner, 7, cudagraph_mode=Mode.FULL)
+    assert not capsys.readouterr().out
+
+
+def test_optional_marker_output_failure_does_not_break_inference(monkeypatch):
+    monkeypatch.setenv("ADM_DP4_REPORT_ACTIVE", "1")
+    values = [packed_sync._encode(4, Mode.NONE)] * 4
+    module, _ = module_for(values)
+    wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+    monkeypatch.setattr("builtins.print", lambda *a, **k: (_ for _ in ()).throw(OSError("closed")))
+    maximum, vector, mode = wrapped(Runner(), 4, cudagraph_mode=Mode.NONE)
+    assert (maximum, vector.tolist(), mode) == (4, [4] * 4, Mode.NONE)
+
+
+def test_path_counters_are_opt_in_completed_call_snapshots(monkeypatch):
+    monkeypatch.delenv(packed_sync.COUNT_ENV, raising=False)
+    module, _ = module_for([packed_sync._encode(4, Mode.NONE)] * 2)
+    absent = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+    assert packed_sync.snapshot_path_counts(
+        SimpleNamespace(_sync_metadata_across_dp=absent)
+    ) is None
+
+    monkeypatch.setenv(packed_sync.COUNT_ENV, "1")
+    module, dist = module_for([packed_sync._encode(4, Mode.NONE)] * 2)
+    wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+    target = SimpleNamespace(_sync_metadata_across_dp=wrapped)
+    before = packed_sync.snapshot_path_counts(target)
+    assert before["counts"] == []
+    runner = Runner(rank=0)
+    runner.dp_size = 2
+    wrapped(runner, 4, cudagraph_mode=Mode.NONE)
+    dist.values[1] = packed_sync.WORD_SENTINEL
+    wrapped(runner, 4, cudagraph_mode=Mode.NONE)
+    after = packed_sync.snapshot_path_counts(target)
+    assert after["pid"] == before["pid"]
+    assert {row["outcome"]: row["calls"] for row in after["counts"]} == {
+        "word_dp2": 1, "native_sentinel_fallback": 1
+    }
+    after["counts"].clear()
+    assert len(packed_sync.snapshot_path_counts(target)["counts"]) == 2
+
+
+def test_counter_reports_native_skip_and_never_counts_failed_collective(monkeypatch):
+    monkeypatch.setenv(packed_sync.COUNT_ENV, "1")
+    module, dist = module_for([packed_sync._encode(4, Mode.NONE)] * 2)
+    wrapped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+    runner = Runner(rank=0)
+    runner.dp_size = 1
+    wrapped(runner, 4, cudagraph_mode=Mode.NONE)
+    runner.dp_size = 2
+    module.should_skip_allreduce_across_dp_group = lambda *_: True
+    # _wrap freezes the native skip callable at installation time.
+    skipped = packed_sync._wrap(Runner._sync_metadata_across_dp, module)
+    skipped(runner, 4, cudagraph_mode=Mode.NONE)
+    assert skipped._adm_path_counts_snapshot()["counts"][0]["outcome"] == "native_skip"
+    assert wrapped._adm_path_counts_snapshot()["counts"][0]["outcome"] == "native_dp1"
+
+    def fail(*_args, **_kwargs):
+        raise RuntimeError("collective failed")
+
+    dist.all_reduce = fail
+    with pytest.raises(RuntimeError, match="collective failed"):
+        wrapped(runner, 4, cudagraph_mode=Mode.NONE)
+    assert wrapped._adm_path_counts_snapshot()["counts"][0]["outcome"] == "native_dp1"
