@@ -20,8 +20,13 @@
   "mod_id": "adm",
   "repository": "ascend-distributed-metadata",
   "responsibility": {
-    "advisor_status": "unknown",
-    "advisors": [],
+    "advisor_status": "declared",
+    "advisors": [
+      {
+        "name": "Shuhao Zhang / 张书豪",
+        "relationship": "internal"
+      }
+    ],
     "maintainers": [
       {
         "github": "sad-and-bad1231",
